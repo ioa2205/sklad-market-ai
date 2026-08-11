@@ -1,0 +1,37 @@
+package org.example.service;
+
+import org.example.dto.CategoryTreeResponse;
+import org.example.dto.categoryAtribute.CategoryAttributeResponse;
+import org.example.dto.categoryAtribute.CategoryCreateRequest;
+import org.example.dto.CategoryResponse;
+import org.example.dto.CategoryUpdateRequest;
+import org.example.dto.internal.CategoryInternalSummaryResponse;
+import org.example.dto.internal.CategoryInternalValidationResponse;
+import org.example.entity.Category;
+import org.example.enums.AppLanguage;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+public interface CategoryService {
+
+
+    CategoryResponse create(CategoryCreateRequest request, MultipartFile file, AppLanguage language);
+
+    CategoryResponse update(Long id, CategoryUpdateRequest request,MultipartFile file, AppLanguage language);
+
+    Boolean delete(Long id,AppLanguage language);
+
+    Page<CategoryResponse> getCategory(Pageable pageable,AppLanguage language);
+
+    CategoryResponse getCategoryBySlug(String slug, AppLanguage language);
+
+    /** Read-only attribute schema for a category (code/label/dataType/isRequired/isFilterable/optionsJson/sortOrder). */
+    List<CategoryAttributeResponse> getAttributesBySlug(String slug, AppLanguage language);
+
+    List<CategoryTreeResponse> getCategoryTree(AppLanguage language);
+
+    Category findById(Long categoryId);
+}

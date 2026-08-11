@@ -1,0 +1,11 @@
+### Obtain a local access token after configuring the market-realm client in Keycloak.
+POST http://localhost:9090/realms/market-realm/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=market-backend&client_secret=local-dev-client-secret&username=YOUR_LOCAL_USER&password=YOUR_LOCAL_PASSWORD&grant_type=password
+
+### Refresh a local access token.
+POST http://localhost:9090/realms/market-realm/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&client_id=market-backend&client_secret=local-dev-client-secret&refresh_token=YOUR_REFRESH_TOKEN

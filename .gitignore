@@ -1,0 +1,26 @@
+# Secrets and machine-local configuration
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.p12
+**/*.pfx
+**/*.jks
+
+# Dependencies and build output
+**/node_modules/
+**/dist/
+**/build/
+**/.gradle/
+**/coverage/
+
+# IDE and OS metadata
+**/.idea/
+**/.vscode/
+**/.DS_Store
+**/Thumbs.db
+
+# Logs and temporary files
+**/*.log
+**/*.tmp
+**/*.zip

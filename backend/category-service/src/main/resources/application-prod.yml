@@ -1,0 +1,53 @@
+server:
+  address: 127.0.0.1
+  domain: ${SERVER_DOMAIN:https://skladmarket.uz}
+  port: 8084
+  url: ${SWAGGER_SERVER_URL:https://skladmarket.uz}
+
+spring:
+  application:
+    name: category-service
+
+  # DATABASE
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:skalad_market_category}
+    username: ${DB_USERNAME:sklad_user}
+    password: ${DB_PASSWORD:sklad-market}
+    driver-class-name: org.postgresql.Driver
+
+  # Kafka Producer config
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://127.0.0.1:9090/realms/market-realm}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://127.0.0.1:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    ip-address: ${SERVER_IP:127.0.0.1}
+    instance-id: ${spring.application.name}:${server.port}
+
+springdoc:
+  swagger-ui:
+    config-url: /swagger/category/v3/api-docs/swagger-config
+    url: /swagger/category/v3/api-docs
