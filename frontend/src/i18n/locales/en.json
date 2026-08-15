@@ -68,7 +68,21 @@
     "wholesale": "Wholesale",
     "retail": "Retail",
     "popularProducts": "Popular products",
-    "productsNotFound": "No products found"
+    "productsNotFound": "No products found",
+    "aiAssistant": {
+      "badge": "AI assistant",
+      "greeting": "Hi, {{name}}!",
+      "title": "What can I help you find?",
+      "subtitle": "AI searches products and companies by meaning, compares results, and recommends suitable suppliers.",
+      "open": "Open AI assistant",
+      "searchAction": "Search “{{query}}” with AI across products and companies",
+      "queryPrompt": "Find products and companies for “{{query}}”. Show the best matches and explain why they fit.",
+      "suggestions": [
+        "Recommend suitable suppliers",
+        "Find verified companies",
+        "Show similar products"
+      ]
+    }
   },
   "catalogModal": {
     "categoriesNotFound": "No categories found",

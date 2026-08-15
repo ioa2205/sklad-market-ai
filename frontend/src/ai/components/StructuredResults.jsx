@@ -171,16 +171,19 @@ function PublicContact({ contact, status }) {
 
 function InternalTitle({ item, type }) {
   const name = asText(item.name) || t(type === "PRODUCT" ? "results.unnamedProduct" : "results.unnamedCompany");
-  const slug = asText(item.slug);
-  if (!slug) return <h4 className="font-semibold text-ink-900 dark:text-white">{name}</h4>;
-  const path = type === "PRODUCT" ? "/product/" : "/company/";
   return (
-    <h4 className="font-semibold text-ink-900 dark:text-white">
-      <Link to={`${path}${encodeURIComponent(slug)}`} className="hover:text-brand-600 hover:underline dark:hover:text-brand-400">
-        {name}
-      </Link>
+    <h4 className="font-semibold text-ink-900 transition-colors group-hover:text-brand-700 dark:text-white dark:group-hover:text-brand-300">
+      {name}
     </h4>
   );
+}
+
+function resultPath(item, type) {
+  const identity = asText(
+    item.slug ?? (type === "PRODUCT" ? item.id ?? item.productId : item.companyId ?? item.id)
+  );
+  if (!identity) return null;
+  return `${type === "PRODUCT" ? "/product/" : "/company/"}${encodeURIComponent(identity)}`;
 }
 
 function BusinessCard({ item, supplier = false, indexFreshness }) {
@@ -188,8 +191,10 @@ function BusinessCard({ item, supplier = false, indexFreshness }) {
   const price = type === "PRODUCT" ? formatMoney(item.price, item.currency) : formatRange(item.minPrice, item.maxPrice);
   const indexedAsVerified = asText(item.verificationStatus).toUpperCase() === "VERIFIED";
   const historicalVerification = indexFreshness?.stale !== false;
-  return (
-    <article className="rounded-xl border border-ink-100 bg-white p-3.5 dark:border-[#242424] dark:bg-[#111111]">
+  const path = resultPath(item, type);
+  const name = asText(item.name) || t(type === "PRODUCT" ? "results.unnamedProduct" : "results.unnamedCompany");
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
@@ -211,8 +216,32 @@ function BusinessCard({ item, supplier = false, indexFreshness }) {
         )}
       </div>
       <Reasons reasons={item.reasons} />
+      {path && (
+        <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 dark:text-brand-300">
+          {t(type === "PRODUCT" ? "results.openProduct" : "results.openCompany")}
+          <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
+        </span>
+      )}
+    </>
+  );
+
+  return (
+    <article className="overflow-hidden rounded-xl border border-ink-100 bg-white transition-all hover:border-brand-200 hover:shadow-md dark:border-[#242424] dark:bg-[#111111] dark:hover:border-brand-500/30">
+      {path ? (
+        <Link
+          to={path}
+          aria-label={name}
+          className="group block p-3.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+        >
+          {content}
+        </Link>
+      ) : (
+        <div className="p-3.5">{content}</div>
+      )}
       {type === "COMPANY" && (
-        <PublicContact contact={item.contact} status={item.contactStatus} />
+        <div className="px-3.5 pb-3.5">
+          <PublicContact contact={item.contact} status={item.contactStatus} />
+        </div>
       )}
     </article>
   );

@@ -4,7 +4,7 @@
     "loading": "Yuklanmoqda...",
     "searchProduct": "Mahsulot qidirish",
     "searchCompany": "Kompaniya qidirish",
-    "searchByMap": "Xarita bo'yicha qidirish",
+    "searchByMap": "Xaritadan qidirish",
     "tryAnotherQuery": "Boshqa so'rov kiriting",
     "noSuggestions": "Mos mahsulot topilmadi",
     "from": "dan",
@@ -68,7 +68,21 @@
     "wholesale": "Optom",
     "retail": "Donalab",
     "popularProducts": "Ommabop mahsulotlar",
-    "productsNotFound": "Mahsulotlar topilmadi"
+    "productsNotFound": "Mahsulotlar topilmadi",
+    "aiAssistant": {
+      "badge": "AI yordamchi",
+      "greeting": "Assalomu alaykum, {{name}}!",
+      "title": "Nimani topishga yordam beray?",
+      "subtitle": "AI mahsulotlar va kompaniyalarni mazmuni bo'yicha qidiradi, taqqoslaydi va mos yetkazib beruvchilarni tavsiya qiladi.",
+      "open": "AI yordamchini ochish",
+      "searchAction": "“{{query}}”ni AI bilan mahsulot va kompaniyalardan qidirish",
+      "queryPrompt": "“{{query}}” bo'yicha mahsulotlar va kompaniyalarni toping. Eng mos natijalarni sabablari bilan ko'rsating.",
+      "suggestions": [
+        "Menga mos yetkazib beruvchilarni tavsiya qiling",
+        "Tasdiqlangan kompaniyalarni toping",
+        "O'xshash mahsulotlarni ko'rsating"
+      ]
+    }
   },
   "catalogModal": {
     "categoriesNotFound": "Kategoriyalar topilmadi",

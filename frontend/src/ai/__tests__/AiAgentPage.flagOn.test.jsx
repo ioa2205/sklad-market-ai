@@ -88,6 +88,26 @@ describe("AiAgentPage — flag on, logged in (streaming happy path)", () => {
     expect(createConversationMock).toHaveBeenCalledTimes(1);
   });
 
+  it("automatically sends an AI-assisted dashboard search prompt once", async () => {
+    streamAiMessageMock.mockImplementation(async ({ onEvent }) => {
+      onEvent({ event: "token", data: { text: "I found matching products and companies." } });
+      onEvent({ event: "done", data: { messageId: "m-dashboard", conversationId: "conv-1" } });
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/ai-agent?prompt=Find%20industrial%20pumps"]}>
+        <AiAgentPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("Find industrial pumps")).toBeInTheDocument();
+    expect(await screen.findByText("I found matching products and companies.")).toBeInTheDocument();
+    expect(streamAiMessageMock).toHaveBeenCalledTimes(1);
+    expect(streamAiMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "Find industrial pumps" })
+    );
+  });
+
   it("shows tool status chips while a tool is running, then resolves", async () => {
     streamAiMessageMock.mockImplementation(async ({ onEvent }) => {
       onEvent({ event: "tool_start", data: { tool: "search_products", summary: "..." } });

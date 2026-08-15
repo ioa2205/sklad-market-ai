@@ -5,6 +5,8 @@ export default {
   },
   greeting: {
     title: "Hello",
+    titleNamed: "Hi, {name}!",
+    badge: "Sklad AI",
     subtitle: "I'm your AI assistant — here to help you find products and suppliers.",
   },
   chat: {
@@ -97,6 +99,8 @@ export default {
     found: "Found: {count}",
     product: "Product",
     company: "Company",
+    openProduct: "Open product",
+    openCompany: "Open company",
     verified: "Verified",
     indexedVerified: "Indexed as verified",
     verifiedAtSnapshot: "Verified at index snapshot",

@@ -5,6 +5,8 @@ export default {
   },
   greeting: {
     title: "Здравствуйте",
+    titleNamed: "Здравствуйте, {name}!",
+    badge: "Sklad AI",
     subtitle: "Я ваш AI-ассистент. Ваш интеллектуальный помощник по поиску товаров и поставщиков.",
   },
   chat: {
@@ -97,6 +99,8 @@ export default {
     found: "Найдено: {count}",
     product: "Товар",
     company: "Компания",
+    openProduct: "Открыть товар",
+    openCompany: "Открыть компанию",
     verified: "Проверена",
     indexedVerified: "В индексе отмечена как проверенная",
     verifiedAtSnapshot: "Проверена на момент снимка индекса",

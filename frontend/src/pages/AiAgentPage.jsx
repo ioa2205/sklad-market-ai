@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send } from "iconsax-reactjs";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import AppShell from "../components/layout/AppShell";
 import { aiSuggestions } from "../data/mockData";
 import { useAuth } from "../context/AuthContext";
 import { isAiAgentEnabled } from "../ai/flag";
 import { useAiChat } from "../ai/hooks/useAiChat";
 import { t, useAiLocale } from "../ai/i18n";
-import LanguageSwitcher from "../ai/components/LanguageSwitcher";
 import Suggestions from "../ai/components/Suggestions";
 import ChatMessages from "../ai/components/ChatMessages";
 import ChatInput from "../ai/components/ChatInput";
@@ -20,6 +19,11 @@ const AI_REPLY_DELAY_MS = 700;
 function normalizeRole(role) {
   const normalized = String(role ?? "").trim().toUpperCase();
   return normalized.startsWith("ROLE_") ? normalized.slice(5) : normalized;
+}
+
+function preferredName(user) {
+  const value = user?.firstName || user?.name || user?.username;
+  return String(value || "").trim().split(/\s+/)[0];
 }
 
 function aiSessionKey(user) {
@@ -172,6 +176,7 @@ function LoggedOutPrompt() {
 
 function RealAiAgentPage() {
   const locale = useAiLocale();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, logout } = useAuth();
   // Username is present in both the cached login payload and refreshed user context. Role is part
   // of the session boundary too: a re-role must not retain cards, history, or unsent seller data.
@@ -230,7 +235,10 @@ function RealAiAgentPage() {
   const chat = useAiChat({ accountKey, onUnauthenticated: handleUnauthenticated });
   const [input, setInput] = useState("");
   const [showListingHelper, setShowListingHelper] = useState(false);
+  const consumedPromptRef = useRef(null);
   const isSeller = normalizeRole(user?.role) === "SELLER";
+  const name = preferredName(user);
+  const sendChatMessage = chat.send;
 
   const interactionDisabled =
     !chat.accountReady ||
@@ -241,14 +249,30 @@ function RealAiAgentPage() {
   const handleSend = (text) => {
     const value = text ?? input;
     if (!accountKey || !value.trim()) return;
-    chat.send(value);
+    sendChatMessage(value);
     setInput("");
   };
+
+  const initialPrompt = String(searchParams.get("prompt") || "").trim().slice(0, 4000);
+  useEffect(() => {
+    if (!initialPrompt || interactionDisabled || consumedPromptRef.current === initialPrompt) return;
+    consumedPromptRef.current = initialPrompt;
+    void sendChatMessage(initialPrompt);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("prompt");
+    setSearchParams(nextParams, { replace: true });
+  }, [initialPrompt, interactionDisabled, searchParams, sendChatMessage, setSearchParams]);
 
   return (
     <AppShell>
       <div lang={locale} className="max-w-5xl mx-auto h-full flex flex-col px-4 sm:px-6 py-5 sm:py-8">
-        <div className="flex justify-end items-center gap-2 mb-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-ink-800 dark:text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-[10px] font-extrabold tracking-tight text-white shadow-sm">
+              AI
+            </span>
+            {t("greeting.badge")}
+          </div>
           {isSeller && (
             <button
               type="button"
@@ -263,7 +287,6 @@ function RealAiAgentPage() {
               {t("seller.entryLabel")}
             </button>
           )}
-          <LanguageSwitcher />
         </div>
 
         {isSeller && showListingHelper && (
@@ -272,18 +295,24 @@ function RealAiAgentPage() {
 
         <div className="flex-1 overflow-y-auto flex flex-col">
           {chat.messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <h1 className="text-xl sm:text-2xl font-display font-bold text-ink-900 dark:text-white mb-3">
-                {t("greeting.title")}
-              </h1>
-              <p className="text-[#8D8D8D] mb-8 sm:mb-8 max-w-lg text-xl sm:text-xl">
-                {t("greeting.subtitle")}
-              </p>
-              <Suggestions
-                onSelect={handleSend}
-                role={user?.role}
-                disabled={interactionDisabled}
-              />
+            <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-3xl border border-ink-100 bg-gradient-to-b from-white to-brand-50/35 px-4 py-10 text-center dark:border-[#1C1C1C] dark:from-[#0D0D0D] dark:to-[#10172A]/60 sm:px-8">
+              <div className="pointer-events-none absolute -top-24 h-48 w-48 rounded-full bg-brand-300/20 blur-3xl dark:bg-brand-500/10" />
+              <div className="relative w-full max-w-3xl">
+                <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-extrabold text-white shadow-lg shadow-brand-500/20">
+                  AI
+                </span>
+                <h1 className="mb-3 font-display text-2xl font-bold text-ink-900 dark:text-white sm:text-3xl">
+                  {name ? t("greeting.titleNamed", { name }) : t("greeting.title")}
+                </h1>
+                <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-ink-500 dark:text-ink-400 sm:text-lg">
+                  {t("greeting.subtitle")}
+                </p>
+                <Suggestions
+                  onSelect={handleSend}
+                  role={user?.role}
+                  disabled={interactionDisabled}
+                />
+              </div>
             </div>
           ) : (
             <ChatMessages

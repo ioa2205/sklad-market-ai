@@ -17,6 +17,7 @@ import {
   STREAM_READ_TIMEOUT_MS,
   streamAiMessage,
 } from "../aiClient";
+import { setAiLocale } from "../../i18n";
 
 const encoder = new TextEncoder();
 
@@ -55,9 +56,9 @@ describe("streamAiMessage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("uses the independent AI locale and stops on a terminal done event", async () => {
+  it("uses the website locale and stops on a terminal done event", async () => {
     localStorage.setItem("access_token", "token-1");
-    localStorage.setItem("skladx_ai_lang", "uz");
+    setAiLocale("uz");
     const response = streamingResponse([
       'event: token\ndata: {"text":"Salom"}\n\n' +
         'event: done\ndata: {"conversationId":"c1"}\n\n',

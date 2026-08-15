@@ -94,6 +94,7 @@ describe("AI i18n dictionaries", () => {
 describe("t()", () => {
   beforeEach(() => {
     localStorage.clear();
+    setAiLocale("ru");
   });
 
   it("resolves a nested key from the current locale", () => {
@@ -119,16 +120,18 @@ describe("t()", () => {
 describe("getAiLocale / setAiLocale", () => {
   beforeEach(() => {
     localStorage.clear();
+    setAiLocale("ru");
   });
 
   it("defaults to ru when nothing is stored", () => {
     expect(getAiLocale()).toBe("ru");
   });
 
-  it("persists a valid locale change to localStorage", () => {
+  it("uses the platform locale and persists it through the shared language key", () => {
     setAiLocale("en");
     expect(getAiLocale()).toBe("en");
-    expect(localStorage.getItem("skladx_ai_lang")).toBe("en");
+    expect(localStorage.getItem("skladx_lang")).toBe("en");
+    expect(localStorage.getItem("skladx_ai_lang")).toBeNull();
   });
 
   it("ignores an unknown locale", () => {

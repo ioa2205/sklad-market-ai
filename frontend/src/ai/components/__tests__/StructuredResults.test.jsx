@@ -59,14 +59,18 @@ describe("StructuredResults", () => {
       },
     ]);
 
-    expect(screen.getByRole("link", { name: "Cement M500" })).toHaveAttribute(
+    const productLink = screen.getByRole("link", { name: "Cement M500" });
+    expect(productLink).toHaveAttribute(
       "href",
       "/product/cement-m500"
     );
-    expect(screen.getByRole("link", { name: "Acme Supply" })).toHaveAttribute(
+    expect(productLink).toContainElement(screen.getByText("Open product"));
+    const companyLink = screen.getByRole("link", { name: "Acme Supply" });
+    expect(companyLink).toHaveAttribute(
       "href",
       "/company/acme-supply"
     );
+    expect(companyLink).toContainElement(screen.getByText("Open company"));
     expect(screen.getByRole("link", { name: "+998 90 123 45 67" })).toHaveAttribute(
       "href",
       "tel:+998901234567"

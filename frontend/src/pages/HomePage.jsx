@@ -11,6 +11,8 @@ import Catalog from "../components/modal/Catalog";
 import { getCatalogBySaleType, searchProducts, getPopularProducts, getAllProducts } from "../api/api";
 import { usePublicBanners } from "../hooks/usePublicBanners";
 import { getPublicCompanyExtras } from "../utils/companyExtras";
+import { useAuth } from "../context/AuthContext";
+import DashboardAiAssistant from "../ai/components/DashboardAiAssistant";
 
 function levenshtein(a, b) {
   const m = a.length;
@@ -65,6 +67,7 @@ function normalizeProduct(p, imageMap, companyMap, t) {
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const { user, isLoggedIn } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [saleType, setSaleType] = useState("wholesale");
   const [query, setQuery] = useState("");
@@ -179,6 +182,8 @@ export default function HomePage() {
           </div>
           <Catalog isOpen={isOpen} onClose={() => setIsOpen(false)} />
         </div>
+
+        <DashboardAiAssistant query={query} user={user} isLoggedIn={isLoggedIn} />
 
         <div className="mb-6 sm:mb-8 relative z-1">
           {bannersLoading ? (

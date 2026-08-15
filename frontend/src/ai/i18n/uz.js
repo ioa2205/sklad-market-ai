@@ -5,6 +5,8 @@ export default {
   },
   greeting: {
     title: "Assalomu alaykum",
+    titleNamed: "Assalomu alaykum, {name}!",
+    badge: "Sklad AI",
     subtitle: "Men sizning AI-yordamchingizman. Mahsulot va yetkazib beruvchilarni topishda yordam beraman.",
   },
   chat: {
@@ -97,6 +99,8 @@ export default {
     found: "Topildi: {count}",
     product: "Mahsulot",
     company: "Kompaniya",
+    openProduct: "Mahsulotni ochish",
+    openCompany: "Kompaniyani ochish",
     verified: "Tasdiqlangan",
     indexedVerified: "Indeksda tasdiqlangan deb belgilangan",
     verifiedAtSnapshot: "Indeks nusxasi vaqtida tasdiqlangan",

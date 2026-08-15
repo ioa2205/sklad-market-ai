@@ -1,34 +1,32 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import LanguageSwitcher from "../LanguageSwitcher";
-import { getAiLocale } from "../../i18n";
+import { getAiLocale, setAiLocale } from "../../i18n";
 
 describe("LanguageSwitcher", () => {
   beforeEach(() => {
     localStorage.clear();
+    setAiLocale("ru");
   });
 
-  it("highlights the current locale and re-renders on switch", () => {
-    render(<LanguageSwitcher />);
+  it("changes the single platform and AI locale together", () => {
+    render(<LanguageSwitcher alwaysVisible />);
 
-    const ruButton = screen.getByRole("button", { name: "RU" });
-    const enButton = screen.getByRole("button", { name: "EN" });
-    expect(ruButton).toHaveAttribute("aria-pressed", "true");
-    expect(enButton).toHaveAttribute("aria-pressed", "false");
-
-    fireEvent.click(enButton);
+    fireEvent.click(screen.getByRole("button", { name: "Язык" }));
+    fireEvent.click(screen.getByRole("button", { name: /English/ }));
 
     expect(getAiLocale()).toBe("en");
-    expect(enButton).toHaveAttribute("aria-pressed", "true");
-    expect(ruButton).toHaveAttribute("aria-pressed", "false");
+    expect(localStorage.getItem("skladx_lang")).toBe("en");
+    expect(screen.getByRole("button", { name: "Language" })).toHaveTextContent("EN");
   });
 
   it("persists the switch across independently-mounted instances", () => {
-    const { unmount } = render(<LanguageSwitcher />);
-    fireEvent.click(screen.getByRole("button", { name: "UZ" }));
+    const { unmount } = render(<LanguageSwitcher alwaysVisible />);
+    fireEvent.click(screen.getByRole("button", { name: "Язык" }));
+    fireEvent.click(screen.getByRole("button", { name: /O'zbekcha/ }));
     unmount();
 
-    render(<LanguageSwitcher />);
-    expect(screen.getByRole("button", { name: "UZ" })).toHaveAttribute("aria-pressed", "true");
+    render(<LanguageSwitcher alwaysVisible />);
+    expect(screen.getByRole("button", { name: "Til" })).toHaveTextContent("UZ");
   });
 });

@@ -7,7 +7,7 @@ import AppShell from "../components/layout/AppShell";
 import ProductCard from "../components/ui/ProductCard";
 import MapView from "../components/ui/MapView";
 import BannerCarousel from "../components/ui/BannerCarousel";
-import { getAllProducts, searchProducts, getCategoryTree, getCatalogMap, getSearchSuggestions, getCatalogFilters, getCategoryCounts } from "../api/api";
+import { getAllProducts, searchProducts, getCategoryTree, getCatalogMap, getSearchSuggestions, getCatalogFilters, getCategoryCounts, getProductsByPriceRange } from "../api/api";
 import { buildProductMapPins } from "../utils/mapPins";
 import { usePublicBanners } from "../hooks/usePublicBanners";
 import { getPublicCompanyExtras } from "../utils/companyExtras";
@@ -19,7 +19,7 @@ function mostCommonCategoryId(ids) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
 }
 
-function normalizeProduct(p, companyMap, t) {
+function normalizeProduct(p, imageMap, companyMap, t) {
   return {
     id: p.id,
     slug: p.slug,
@@ -29,7 +29,7 @@ function normalizeProduct(p, companyMap, t) {
     minProduct: p.minProduct ?? p.min,
     measureUnit: p.unit,
     company: companyMap?.get(p.companyId)?.name ?? (p.companyId ? t("common.companyFallback", { id: p.companyId }) : ""),
-    image: p.imageUrl ?? p.images?.find((img) => img.is_primary)?.url ?? p.images?.[0]?.url ?? null,
+    image: p.imageUrl ?? p.images?.find((img) => img.is_primary)?.url ?? p.images?.[0]?.url ?? imageMap?.get(p.id) ?? null,
     verified: p.status === "ACTIVE",
   };
 }
@@ -64,6 +64,7 @@ export default function CatalogPage() {
   const [mapLoading, setMapLoading] = useState(false);
   const [foundCategoryIds, setFoundCategoryIds] = useState([]);
   const [companyMap, setCompanyMap] = useState(null);
+  const [imageMap, setImageMap] = useState(null);
   const debounceRef = useRef(null);
   const suggestDebounceRef = useRef(null);
   const mapDebounceRef = useRef(null);
@@ -135,6 +136,17 @@ export default function CatalogPage() {
     getPublicCompanyExtras()
       .then(setCompanyMap)
       .catch(() => setCompanyMap(new Map()));
+
+    getAllProducts({ page: 1, perPage: 200 })
+      .then((data) => {
+        const map = new Map();
+        (data?.items ?? []).forEach((p) => {
+          const url = p.imageUrl ?? p.images?.find((img) => img.is_primary)?.url ?? p.images?.[0]?.url;
+          if (url) map.set(p.id, url);
+        });
+        setImageMap(map);
+      })
+      .catch(() => setImageMap(new Map()));
   }, []);
 
   useEffect(() => {
@@ -152,9 +164,10 @@ export default function CatalogPage() {
   useEffect(() => {
     clearTimeout(debounceRef.current);
     const category = activeCategory !== "all" ? activeCategory : undefined;
+    const minP = minPrice.trim() ? Number(minPrice) : undefined;
+    const maxP = maxPrice.trim() ? Number(maxPrice) : undefined;
+    const hasPriceFilter = minP != null || maxP != null;
     const filterParams = {
-      minPrice: minPrice.trim() ? Number(minPrice) : undefined,
-      maxPrice: maxPrice.trim() ? Number(maxPrice) : undefined,
       inStock: inStockOnly || undefined,
       verified: verifiedOnly || undefined,
     };
@@ -162,18 +175,36 @@ export default function CatalogPage() {
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        if (query.trim()) {
+        if (hasPriceFilter) {
+          const data = await getProductsByPriceRange({
+            fromPrice: minP ?? 0,
+            toPrice: maxP ?? 999999999999,
+            page: 1,
+            perPage: 100,
+          });
+          if (ignore) return;
+          let raw = data?.content ?? [];
+          const hasExtraFilters = !!category || !!query.trim();
+          if (category) raw = raw.filter((p) => String(p.categoryId) === category);
+          if (query.trim()) {
+            const q = query.trim().toLowerCase();
+            raw = raw.filter((p) => p.name?.toLowerCase().includes(q));
+          }
+          setProducts(raw.map((p) => normalizeProduct(p, imageMap, companyMap, t)));
+          setTotal(hasExtraFilters ? raw.length : data?.totalElements ?? raw.length);
+          setFoundCategoryIds(raw.map((p) => p.categoryId).filter((id) => id != null));
+        } else if (query.trim()) {
           const data = await searchProducts({ query: query.trim(), page: 1, perPage: 40, category, ...filterParams });
           if (ignore) return;
           const raw = data?.content ?? [];
-          setProducts(raw.map((p) => normalizeProduct(p, companyMap, t)));
+          setProducts(raw.map((p) => normalizeProduct(p, imageMap, companyMap, t)));
           setTotal(data?.totalElements ?? 0);
           setFoundCategoryIds(raw.map((p) => p.categoryId).filter((id) => id != null));
         } else {
           const data = await getAllProducts({ page: 1, perPage: 40, category, ...filterParams });
           if (ignore) return;
           const raw = data?.items ?? [];
-          setProducts(raw.map((p) => normalizeProduct(p, companyMap, t)));
+          setProducts(raw.map((p) => normalizeProduct(p, imageMap, companyMap, t)));
           setTotal(data?.meta?.total ?? 0);
           setFoundCategoryIds(raw.map((p) => p.categoryId).filter((id) => id != null));
         }
@@ -182,9 +213,9 @@ export default function CatalogPage() {
       } finally {
         if (!ignore) setLoading(false);
       }
-    }, query ? 400 : 0);
+    }, query.trim() || hasPriceFilter ? 400 : 0);
     return () => { ignore = true; clearTimeout(debounceRef.current); };
-  }, [query, activeCategory, minPrice, maxPrice, inStockOnly, verifiedOnly, companyMap, t]);
+  }, [query, activeCategory, minPrice, maxPrice, inStockOnly, verifiedOnly, imageMap, companyMap, t]);
 
   return (
     <AppShell>

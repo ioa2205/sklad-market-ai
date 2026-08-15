@@ -4,10 +4,10 @@ Public integration workspace containing the complete backend and frontend snapsh
 
 ## Source snapshots
 
-- `backend/`: `feature/ai-service` at `80c9f95`
-  - Based on backend `upstream/main` at `e6c1274`
-- `frontend/`: `feature/ai-agent` at `c169a79`
-  - Based on frontend `origin/main` at `513430d`
+- `backend/`: local `feature/ai-service` integration at `8b40119`
+  - Includes backend `upstream/main` at `070a90e`
+- `frontend/`: local `feature/ai-agent-latest` integration at `1a1ddfe`
+  - Rebased by applying the AI feature commits onto frontend `origin/main` at `79ea740`
 
 The original repositories' `.git` directories, local build output, IDE metadata, untracked files, and secrets are intentionally not included.
 
@@ -23,6 +23,9 @@ The original repositories' `.git` directories, local build output, IDE metadata,
 - Separate PostgreSQL/pgvector AI database with Flyway V1-V7
 - Gateway, Docker Compose, and additive category-attribute integration
 - Frontend feature flag, structured result cards, safe auth refresh, and AI tests
+- Clickable AI product/company result cards using existing platform detail routes
+- Logged-in dashboard AI welcome, suggested prompts, and search-to-AI handoff
+- One shared website/AI i18next language state for UI and backend response locale
 
 ## Repository layout
 
@@ -51,7 +54,7 @@ Backend changes outside `ai-service` are intentionally small:
 
 The AI service reads existing product, company, category, lead, cart, favorite, chat, and attachment APIs through the gateway. Its external business write is limited to creating a lead after explicit user confirmation.
 
-Frontend AI code lives primarily under `frontend/src/ai`. The shared files `frontend/src/api/http.js`, `api.js`, and `authRefresh.js` coordinate refresh-token rotation for ordinary and AI requests, so frontend reviewers should include them in their integration review.
+Frontend AI code lives primarily under `frontend/src/ai`. The shared files `frontend/src/api/http.js`, `api.js`, and `authRefresh.js` coordinate refresh-token rotation for ordinary and AI requests. `frontend/src/pages/HomePage.jsx` hosts the dashboard AI entry point, while `frontend/src/i18n/index.js` registers the AI translations in the platform's single i18next instance. Frontend reviewers should include these integration files in their review.
 
 ## Recommendation scope
 
@@ -63,3 +66,4 @@ Current recommendations are semantic/content/activity based. Collaborative filte
 - PostgreSQL/pgvector: production Flyway V1-V7 and repository integration checks passed
 - Frontend: 125/125 AI tests passed
 - Frontend production build and AI-scope ESLint passed
+- Current dashboard/clickable-result/shared-language focused suite: 34/34 passed
