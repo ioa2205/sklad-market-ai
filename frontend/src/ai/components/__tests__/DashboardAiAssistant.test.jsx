@@ -17,11 +17,10 @@ describe("DashboardAiAssistant", () => {
     setAiLocale("en");
   });
 
-  it("welcomes the logged-in user and sends the current dashboard query to AI", () => {
+  it("welcomes the logged-in user and opens a suggested AI task", () => {
     render(
       <MemoryRouter>
         <DashboardAiAssistant
-          query="industrial pumps"
           user={{ firstName: "Alex", role: "BUYER" }}
           isLoggedIn
         />
@@ -30,22 +29,17 @@ describe("DashboardAiAssistant", () => {
     );
 
     expect(screen.getByText("Hi, Alex!")).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Search “industrial pumps” with AI across products and companies",
-      })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Recommend suitable suppliers" }));
 
     const location = screen.getByTestId("location").textContent;
     expect(location).toMatch(/^\/ai-agent\?prompt=/);
-    expect(decodeURIComponent(location)).toContain("Find products and companies");
-    expect(decodeURIComponent(location)).toContain("industrial pumps");
+    expect(decodeURIComponent(location)).toContain("Recommend suitable suppliers");
   });
 
   it("does not expose the authenticated dashboard helper to a logged-out visitor", () => {
     render(
       <MemoryRouter>
-        <DashboardAiAssistant query="cement" user={null} isLoggedIn={false} />
+        <DashboardAiAssistant user={null} isLoggedIn={false} />
       </MemoryRouter>
     );
 

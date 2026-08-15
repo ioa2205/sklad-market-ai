@@ -64,6 +64,23 @@ export async function getDraftDetails(draftId, { signal } = {}) {
   return unwrapAi(aiHttp.get(`/ai/drafts/${encodeURIComponent(draftId)}`, { signal }));
 }
 
+export async function searchBusinesses(
+  { query, types = ["PRODUCT", "COMPANY"], limit = 8 } = {},
+  { signal } = {}
+) {
+  const normalizedTypes = Array.isArray(types) ? types.filter(Boolean).join(",") : types;
+  return unwrapAi(
+    aiHttp.get("/ai/business-search", {
+      params: {
+        q: String(query ?? "").trim().slice(0, 300),
+        types: normalizedTypes || undefined,
+        limit: Math.max(1, Math.min(Number(limit) || 8, 12)),
+      },
+      signal,
+    })
+  );
+}
+
 export async function publishBuyingIntent(intentId) {
   return unwrapAi(
     aiHttp.post(`/ai/buying-intents/${encodeURIComponent(intentId)}/publish`, {

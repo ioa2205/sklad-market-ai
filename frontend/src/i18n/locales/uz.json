@@ -68,6 +68,7 @@
     "wholesale": "Optom",
     "retail": "Donalab",
     "popularProducts": "Ommabop mahsulotlar",
+    "searchResults": "Qidiruv natijalari",
     "productsNotFound": "Mahsulotlar topilmadi",
     "aiAssistant": {
       "badge": "AI yordamchi",
@@ -81,7 +82,26 @@
         "Menga mos yetkazib beruvchilarni tavsiya qiling",
         "Tasdiqlangan kompaniyalarni toping",
         "O'xshash mahsulotlarni ko'rsating"
-      ]
+      ],
+      "panel": {
+        "title": "AI aqlli natijalari",
+        "subtitle": "“{{query}}” uchun mahsulot va kompaniyalar orasidan mazmuniy natijalar.",
+        "filterLabel": "AI natijalarini filtrlash",
+        "filter": { "ALL": "Barchasi", "PRODUCT": "Mahsulotlar", "COMPANY": "Kompaniyalar" },
+        "type": { "PRODUCT": "Mahsulot", "COMPANY": "Kompaniya" },
+        "loading": "AI mos mahsulot va kompaniyalarni qidirmoqda",
+        "unnamed": "Nomsiz natija",
+        "productCount": "{{count}} ta mahsulot",
+        "verified": "Tasdiqlangan",
+        "openResult": "Natijani ochish",
+        "rateLimited": "AI qidiruviga so'rovlar juda ko'p. Biroz kuting.",
+        "error": "AI natijalari vaqtincha mavjud emas. Oddiy qidiruv ishlashda davom etadi.",
+        "retry": "Qayta urinish",
+        "empty": "AI bu qidiruv uchun qo'shimcha moslik topmadi.",
+        "emptyFilter": "Bu turdagi AI natijalari topilmadi.",
+        "stale": "AI eskiroq katalog nusxasidan foydalandi. Joriy ma'lumotni tekshirish uchun natijani oching.",
+        "continueChat": "Bu natijalar haqida AI'dan so'rash"
+      }
     }
   },
   "catalogModal": {

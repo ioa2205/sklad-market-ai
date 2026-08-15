@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight2, SearchNormal1 } from "iconsax-reactjs";
+import { ArrowRight2 } from "iconsax-reactjs";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { isAiAgentEnabled } from "../flag";
@@ -18,10 +18,9 @@ function preferredName(user) {
   return String(value || "").trim().split(/\s+/)[0];
 }
 
-export default function DashboardAiAssistant({ query = "", user, isLoggedIn }) {
+export default function DashboardAiAssistant({ user, isLoggedIn }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const cleanQuery = String(query).trim().slice(0, 500);
   const suggestions = t("home.aiAssistant.suggestions", { returnObjects: true });
 
   if (!isAiAgentEnabled() || !isLoggedIn) return null;
@@ -64,32 +63,18 @@ export default function DashboardAiAssistant({ query = "", user, isLoggedIn }) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-2 lg:max-w-[46%] lg:items-end">
-          {cleanQuery ? (
-            <button
-              type="button"
-              onClick={() => openWithPrompt(t("home.aiAssistant.queryPrompt", { query: cleanQuery }))}
-              className="group flex w-full items-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-left text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#10172A]"
-            >
-              <SearchNormal1 size={18} className="shrink-0" />
-              <span className="min-w-0 flex-1 line-clamp-2">
-                {t("home.aiAssistant.searchAction", { query: cleanQuery })}
-              </span>
-              <ArrowRight2 size={17} className="shrink-0 transition-transform group-hover:translate-x-0.5" />
-            </button>
-          ) : (
-            <div className="flex flex-wrap gap-2 lg:justify-end">
-              {(Array.isArray(suggestions) ? suggestions : []).map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => openWithPrompt(suggestion)}
-                  className="rounded-full border border-brand-200 bg-white/85 px-3 py-2 text-xs font-semibold text-ink-700 transition-colors hover:border-brand-400 hover:text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 dark:border-brand-500/20 dark:bg-white/5 dark:text-ink-200 dark:hover:border-brand-400 dark:hover:text-brand-300"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            {(Array.isArray(suggestions) ? suggestions : []).map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => openWithPrompt(suggestion)}
+                className="rounded-full border border-brand-200 bg-white/85 px-3 py-2 text-xs font-semibold text-ink-700 transition-colors hover:border-brand-400 hover:text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 dark:border-brand-500/20 dark:bg-white/5 dark:text-ink-200 dark:hover:border-brand-400 dark:hover:text-brand-300"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
           <Link
             to="/ai-agent"
             className="inline-flex items-center gap-1.5 self-start text-xs font-semibold text-brand-700 hover:text-brand-800 lg:self-auto dark:text-brand-300 dark:hover:text-brand-200"

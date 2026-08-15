@@ -21,6 +21,7 @@ import {
   getDraftDetails,
   listConversations,
   publishBuyingIntent,
+  searchBusinesses,
   suggestListing,
   uploadListingImage,
 } from "../aiClient";
@@ -55,6 +56,7 @@ describe("AI-owned HTTP client", () => {
 
   beforeEach(() => {
     localStorage.clear();
+    setAiLocale("ru");
     originalAdapter = aiHttp.defaults.adapter;
     originalSharedAdapter = sharedHttp.defaults.adapter;
   });
@@ -102,6 +104,24 @@ describe("AI-owned HTTP client", () => {
     expect(header(configs[9], "Authorization")).toBe("Bearer access-1");
     expect(configs[10].url).toBe("/attach/delete/temporary%2Fimage.jpg");
     expect(configs[11].url).toBe("/ai/drafts/123e4567-e89b-42d3-a456-426614174000");
+  });
+
+  it("calls the bounded, read-only business search endpoint", async () => {
+    setAiLocale("uz");
+    localStorage.setItem("access_token", "access-business");
+    let captured;
+    aiHttp.defaults.adapter = (config) => {
+      captured = config;
+      return success(config, { items: [] });
+    };
+
+    await searchBusinesses({ query: "  cement  ", limit: 99 });
+
+    expect(captured.url).toBe("/ai/business-search");
+    expect(captured.method).toBe("get");
+    expect(captured.params).toEqual({ q: "cement", types: "PRODUCT,COMPANY", limit: 12 });
+    expect(header(captured, "Accept-Language")).toBe("UZ");
+    expect(header(captured, "Authorization")).toBe("Bearer access-business");
   });
 
   it("refreshes a failed JSON request once and calls the logout listener after a final 401", async () => {

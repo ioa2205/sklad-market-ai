@@ -25,6 +25,7 @@ The original repositories' `.git` directories, local build output, IDE metadata,
 - Frontend feature flag, structured result cards, safe auth refresh, and AI tests
 - Clickable AI product/company result cards using existing platform detail routes
 - Logged-in dashboard AI welcome, suggested prompts, and search-to-AI handoff
+- Responsive right-side AI smart-results panel beside normal dashboard search results
 - One shared website/AI i18next language state for UI and backend response locale
 
 ## Repository layout
@@ -54,7 +55,7 @@ Backend changes outside `ai-service` are intentionally small:
 
 The AI service reads existing product, company, category, lead, cart, favorite, chat, and attachment APIs through the gateway. Its external business write is limited to creating a lead after explicit user confirmation.
 
-Frontend AI code lives primarily under `frontend/src/ai`. The shared files `frontend/src/api/http.js`, `api.js`, and `authRefresh.js` coordinate refresh-token rotation for ordinary and AI requests. `frontend/src/pages/HomePage.jsx` hosts the dashboard AI entry point, while `frontend/src/i18n/index.js` registers the AI translations in the platform's single i18next instance. Frontend reviewers should include these integration files in their review.
+Frontend AI code lives primarily under `frontend/src/ai`. The shared files `frontend/src/api/http.js`, `api.js`, and `authRefresh.js` coordinate refresh-token rotation for ordinary and AI requests. `frontend/src/pages/HomePage.jsx` hosts the welcome and failure-isolated smart-results sidebar, while `frontend/src/i18n/index.js` registers the AI translations in the platform's single i18next instance. Frontend reviewers should include these integration files in their review.
 
 ## Recommendation scope
 
@@ -67,3 +68,4 @@ Current recommendations are semantic/content/activity based. Collaborative filte
 - Frontend: 125/125 AI tests passed
 - Frontend production build and AI-scope ESLint passed
 - Current dashboard/clickable-result/shared-language focused suite: 34/34 passed
+- Right-side dashboard AI panel focused suite: 11/11 passed
