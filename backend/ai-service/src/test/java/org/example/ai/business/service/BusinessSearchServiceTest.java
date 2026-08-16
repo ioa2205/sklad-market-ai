@@ -10,6 +10,11 @@ import org.example.ai.business.dto.BusinessSearchResponse;
 import org.example.ai.business.index.BusinessLexicalRepository;
 import org.example.ai.business.index.CompanyEmbeddingRepository;
 import org.example.ai.business.index.CompanySearchHit;
+import org.example.ai.business.remote.PublicBusinessClient;
+import org.example.ai.business.remote.RemoteBusinessProduct;
+import org.example.ai.business.remote.RemoteBusinessProductPage;
+import org.example.ai.business.remote.RemoteCompanyPage;
+import org.example.ai.business.remote.RemotePublicCompany;
 import org.example.ai.embedding.EmbeddingSearchHit;
 import org.example.ai.embedding.ProductEmbeddingRepository;
 import org.example.ai.tool.ToolExecutionContext;
@@ -35,10 +40,11 @@ class BusinessSearchServiceTest {
     private final ProductEmbeddingRepository products = mock(ProductEmbeddingRepository.class);
     private final CompanyEmbeddingRepository companies = mock(CompanyEmbeddingRepository.class);
     private final BusinessLexicalRepository lexical = mock(BusinessLexicalRepository.class);
+    private final PublicBusinessClient liveCatalog = mock(PublicBusinessClient.class);
     private final PublicCompanyContactHydrator contacts = mock(PublicCompanyContactHydrator.class);
     private final BusinessIndexFreshnessService freshness = mock(BusinessIndexFreshnessService.class);
     private final BusinessSearchService service = new BusinessSearchService(
-            embeddings, products, companies, lexical, contacts, freshness);
+            embeddings, products, companies, lexical, liveCatalog, contacts, freshness);
     private final ToolExecutionContext context = new ToolExecutionContext(null, "buyer", "jwt", Set.of("BUYER"), "uz");
 
     @Test
@@ -105,6 +111,30 @@ class BusinessSearchServiceTest {
             assertThat(item.reasons()).contains("LEXICAL_NAME_OR_SLUG_MATCH");
         });
         verify(products, never()).searchFiltered(any(), any(), any(), any(), any(), any(), anyInt());
+    }
+
+    @Test
+    void fallsBackToLivePublicCatalogWhileAiIndexIsEmpty() {
+        when(embeddings.embed("cement")).thenThrow(new IllegalStateException("provider not configured"));
+        when(liveCatalog.searchPublicProducts("cement", 30)).thenReturn(new RemoteBusinessProductPage(
+                List.of(new RemoteBusinessProduct(1L, 9L, 7L, "Cement", "cement", null, null,
+                        100.0, "UZS", 1L, 3L, null, "APPROVED", true, 0L, 0L, Map.of())),
+                1, 30, 1L, 1));
+        when(liveCatalog.searchVerifiedCompanies("cement", 30)).thenReturn(new RemoteCompanyPage(
+                List.of(new RemotePublicCompany(9L, "Cement Company", "cement-company", null,
+                        "VERIFIED", false)), 1, 1L, 0));
+        when(contacts.hydrateBatch(List.of("cement-company"), context)).thenReturn(Map.of());
+        when(freshness.snapshot(true, true)).thenReturn(new BusinessIndexFreshness(
+                null, true, "product=NEVER_RUN;company=NEVER_RUN", "warming up"));
+
+        BusinessSearchResponse response = service.search(new BusinessSearchCriteria(
+                "cement", Set.of(BusinessResultType.PRODUCT, BusinessResultType.COMPANY), null, null,
+                null, null, null, 10), context);
+
+        assertThat(response.items()).extracting(item -> item.type()).containsExactly(
+                BusinessResultType.COMPANY, BusinessResultType.PRODUCT);
+        assertThat(response.items()).allSatisfy(item ->
+                assertThat(item.reasons()).anyMatch(reason -> reason.startsWith("LIVE_")));
     }
 
     @Test

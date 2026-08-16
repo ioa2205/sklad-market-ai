@@ -10,6 +10,11 @@ import org.example.ai.business.dto.BusinessSearchResponse;
 import org.example.ai.business.index.BusinessLexicalRepository;
 import org.example.ai.business.index.CompanyEmbeddingRepository;
 import org.example.ai.business.index.CompanySearchHit;
+import org.example.ai.business.remote.PublicBusinessClient;
+import org.example.ai.business.remote.RemoteBusinessProduct;
+import org.example.ai.business.remote.RemoteBusinessProductPage;
+import org.example.ai.business.remote.RemoteCompanyPage;
+import org.example.ai.business.remote.RemotePublicCompany;
 import org.example.ai.embedding.EmbeddingSearchHit;
 import org.example.ai.embedding.ProductEmbeddingRepository;
 import org.example.ai.tool.ToolExecutionContext;
@@ -28,6 +33,7 @@ public class BusinessSearchService {
 
     public static final String SCORE_MEANING =
             "Relevance fuses semantic and local name/slug signals; it is not a guarantee. "
+                    + "When the AI index is still warming up, verified live catalog matches may be used. "
                     + "Price filters require a currency and apply only to individual product prices, "
                     + "never to cross-currency company catalog totals.";
 
@@ -35,6 +41,7 @@ public class BusinessSearchService {
     private final ProductEmbeddingRepository products;
     private final CompanyEmbeddingRepository companies;
     private final BusinessLexicalRepository lexical;
+    private final PublicBusinessClient liveCatalog;
     private final PublicCompanyContactHydrator contacts;
     private final BusinessIndexFreshnessService freshness;
 
@@ -43,12 +50,14 @@ public class BusinessSearchService {
             ProductEmbeddingRepository products,
             CompanyEmbeddingRepository companies,
             BusinessLexicalRepository lexical,
+            PublicBusinessClient liveCatalog,
             PublicCompanyContactHydrator contacts,
             BusinessIndexFreshnessService freshness) {
         this.queryEmbeddings = queryEmbeddings;
         this.products = products;
         this.companies = companies;
         this.lexical = lexical;
+        this.liveCatalog = liveCatalog;
         this.contacts = contacts;
         this.freshness = freshness;
     }
@@ -64,7 +73,11 @@ public class BusinessSearchService {
                     criteria.minPrice(), criteria.maxPrice(), criteria.currency(), candidates);
             List<EmbeddingSearchHit> nameMatches = lexical.searchProducts(criteria.query(), criteria.categoryId(),
                     criteria.regionId(), criteria.minPrice(), criteria.maxPrice(), criteria.currency(), candidates);
-            ranked.addAll(productItems(semantic, nameMatches, criteria));
+            List<BusinessSearchItem> productMatches = productItems(semantic, nameMatches, criteria);
+            if (productMatches.isEmpty() && supportsLiveFallback(criteria)) {
+                productMatches = liveProductItems(criteria);
+            }
+            ranked.addAll(productMatches);
         }
 
         if (criteria.types().contains(BusinessResultType.COMPANY)) {
@@ -74,7 +87,11 @@ public class BusinessSearchService {
                     : companies.searchFiltered(vector, criteria.categoryId(), criteria.regionId(), candidates);
             List<CompanySearchHit> nameMatches = lexical.searchCompanies(criteria.query(), criteria.categoryId(),
                     criteria.regionId(), false, candidates);
-            ranked.addAll(companyItems(semantic, nameMatches, criteria));
+            List<BusinessSearchItem> companyMatches = companyItems(semantic, nameMatches, criteria);
+            if (companyMatches.isEmpty() && supportsLiveFallback(criteria)) {
+                companyMatches = liveCompanyItems(criteria);
+            }
+            ranked.addAll(companyMatches);
         }
 
         List<BusinessSearchItem> selectedWithoutContacts = ranked.stream()
@@ -97,6 +114,50 @@ public class BusinessSearchService {
                 criteria.types().contains(BusinessResultType.PRODUCT),
                 criteria.types().contains(BusinessResultType.COMPANY));
         return new BusinessSearchResponse(criteria.query(), selected.size(), selected, SCORE_MEANING, indexFreshness);
+    }
+
+    private boolean supportsLiveFallback(BusinessSearchCriteria criteria) {
+        // The public fallback endpoints cannot faithfully apply every AI capability filter. Never
+        // return a page-filtered approximation when the caller asked for a structured filter.
+        return criteria.categoryId() == null && criteria.regionId() == null
+                && criteria.minPrice() == null && criteria.maxPrice() == null;
+    }
+
+    private List<BusinessSearchItem> liveProductItems(BusinessSearchCriteria criteria) {
+        try {
+            RemoteBusinessProductPage page = liveCatalog.searchPublicProducts(
+                    criteria.query(), Math.min(50, Math.max(12, criteria.limit() * 3)));
+            if (page == null || page.items() == null) return List.of();
+            return page.items().stream()
+                    .filter(RemoteBusinessProduct::publiclyVisible)
+                    .limit(criteria.limit())
+                    .map(item -> new BusinessSearchItem(
+                            BusinessResultType.PRODUCT, item.id(), item.slug(), item.name(), item.categoryId(),
+                            item.regionId(), item.price(), item.currency(), null, List.of(), List.of(), null,
+                            null, null, 0.70, List.of("LIVE_CATALOG_MATCH"), null, null))
+                    .toList();
+        } catch (RuntimeException unavailable) {
+            return List.of();
+        }
+    }
+
+    private List<BusinessSearchItem> liveCompanyItems(BusinessSearchCriteria criteria) {
+        try {
+            RemoteCompanyPage page = liveCatalog.searchVerifiedCompanies(
+                    criteria.query(), Math.min(50, Math.max(12, criteria.limit() * 3)));
+            if (page == null || page.content() == null) return List.of();
+            return page.content().stream()
+                    .filter(RemotePublicCompany::indexable)
+                    .limit(criteria.limit())
+                    .map(item -> new BusinessSearchItem(
+                            BusinessResultType.COMPANY, item.id(), item.slug(), item.name(), null, null,
+                            null, null, item.verificationStatus(), List.of(), List.of(), null,
+                            null, null, 0.70, List.of("LIVE_COMPANY_MATCH", "LIVE_AS_VERIFIED"),
+                            BusinessContactStatus.NOT_CHECKED, null))
+                    .toList();
+        } catch (RuntimeException unavailable) {
+            return List.of();
+        }
     }
 
     private List<BusinessSearchItem> productItems(

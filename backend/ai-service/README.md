@@ -138,8 +138,10 @@ Ping (requires a Bearer token once Keycloak is reachable): `curl -H "Authorizati
   structured-result snapshots. They are hydrated live from the already-public company-by-slug
   endpoint for shortlisted results; owner-visible assistant prose can still mention a live result.
 - `GET /api/v1/ai/business-search` returns typed PRODUCT/COMPANY results. Semantic and local
-  name/slug matches are fused, and local lexical search remains available when the embedding
-  provider fails. Filters are applied in SQL before `LIMIT`; every response includes index
+  name/slug matches are fused. If the separate AI index is empty, unfiltered dashboard queries
+  fall back to the existing read-only public catalog and verified-company endpoints; this makes a
+  restored marketplace database immediately searchable while the AI index warms up. Structured
+  filters never use a page-filtered approximation. Filters are applied in SQL before `LIMIT`; every response includes index
   `asOf`/staleness metadata, and relevance is a ranking signal rather than a stock guarantee.
   Product price bounds require an explicit three-letter currency; no cross-currency catalog range
   is exposed.
@@ -282,8 +284,9 @@ PLAN.md §8):
 - **Indexer is poll-based**, not event-driven — new/edited products appear in semantic search within
   one `AI_INDEXER_INTERVAL_MS` cycle, not instantly (Kafka-based incremental indexing is deferred,
   PLAN.md §8).
-- **"Similar products" isn't wired into the product page.** The endpoint ships and is documented as a
-  consumable API; wiring the widget into `ProductPage.jsx` is the frontend team's call (PLAN.md §8).
+- **Product-page recommendations degrade safely.** Logged-in users receive AI vector neighbours
+  when the product/index is available; the existing same-category list remains the frontend
+  fallback while the AI index is warming up or unavailable.
 - **Deferred capabilities:** collaborative-filtering recommendations (needs meaningful interaction
   volume), conversation summarization / long memory, and Anthropic/Voyage provider
   implementations (interfaces exist).

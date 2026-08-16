@@ -43,7 +43,17 @@ frontend/  Vite/React frontend
 4. Deploy/rebuild the additive `category-service` endpoint, API Gateway route, `ai-db`, and `ai-service`.
 5. Let Flyway apply V1-V7, then run the product and business reindex endpoints.
 6. Complete the real JWT/gateway/nginx SSE smoke checklist in the handoff document.
-7. Keep `VITE_FEATURE_AI_AGENT=false` until the backend smoke test passes. Set it to `true` at frontend build time to enable the real agent.
+7. This AI-specific repository enables AI by default. `VITE_FEATURE_AI_AGENT=false` is an explicit
+   emergency/staged-rollout kill switch; do not set it for normal local testing.
+
+### Testing with restored server databases
+
+Restoring the marketplace PostgreSQL databases does **not** restore the separate `ai-db` pgvector
+index. Start `ai-db` and `ai-service`, let Flyway apply V1-V7, and trigger both admin reindex
+endpoints. A valid `GEMINI_API_KEY` is required for semantic search and recommendations. Dashboard
+business search now falls back to the platform's read-only public catalog/company endpoints while
+the AI index is empty or warming up, so exact live matches remain visible; semantic ranking and
+similar-product recommendations still require the completed AI index.
 
 ## Integration surface
 
@@ -55,7 +65,7 @@ Backend changes outside `ai-service` are intentionally small:
 
 The AI service reads existing product, company, category, lead, cart, favorite, chat, and attachment APIs through the gateway. Its external business write is limited to creating a lead after explicit user confirmation.
 
-Frontend AI code lives primarily under `frontend/src/ai`. The shared files `frontend/src/api/http.js`, `api.js`, and `authRefresh.js` coordinate refresh-token rotation for ordinary and AI requests. `frontend/src/pages/HomePage.jsx` hosts the welcome and failure-isolated smart-results sidebar, while `frontend/src/i18n/index.js` registers the AI translations in the platform's single i18next instance. Frontend reviewers should include these integration files in their review.
+Frontend AI code lives primarily under `frontend/src/ai`. The shared files `frontend/src/api/http.js`, `api.js`, and `authRefresh.js` coordinate refresh-token rotation for ordinary and AI requests. `frontend/src/pages/HomePage.jsx` hosts the welcome and failure-isolated smart-results sidebar, `frontend/src/pages/ProductPage.jsx` prefers AI similar-product recommendations with its previous category fallback, and `frontend/src/i18n/index.js` registers the AI translations in the platform's single i18next instance. Frontend reviewers should include these integration files in their review. See [`AI_LOCAL_SMOKE.md`](AI_LOCAL_SMOKE.md) for the restored-database checklist.
 
 ## Recommendation scope
 

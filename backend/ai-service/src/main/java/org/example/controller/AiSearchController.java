@@ -24,8 +24,8 @@ import java.util.List;
  * Vector-index read endpoints (PLAN.md Phase 5). Both are authenticated (SecurityConfig's
  * {@code anyRequest().authenticated()}), owner-agnostic (the catalog is public data), and never
  * call downstream services — they query the local {@code product_embedding} table only. The
- * "similar products" endpoint is documented in README.md as a consumable API for the frontend team;
- * wiring it into ProductPage is deferred to them (PLAN.md §8).
+ * The frontend product page consumes the "similar products" endpoint for logged-in users and
+ * retains its ordinary same-category list as a failure-safe fallback.
  */
 @RestController
 @RequestMapping("/api/v1/ai")

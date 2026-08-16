@@ -81,6 +81,17 @@ export async function searchBusinesses(
   );
 }
 
+export async function getSimilarProducts(productId, { limit = 4, signal } = {}) {
+  const normalizedId = Number(productId);
+  if (!Number.isInteger(normalizedId) || normalizedId <= 0) return { count: 0, items: [] };
+  return unwrapAi(
+    aiHttp.get(`/ai/similar/${normalizedId}`, {
+      params: { limit: Math.max(1, Math.min(Number(limit) || 4, 12)) },
+      signal,
+    })
+  );
+}
+
 export async function publishBuyingIntent(intentId) {
   return unwrapAi(
     aiHttp.post(`/ai/buying-intents/${encodeURIComponent(intentId)}/publish`, {

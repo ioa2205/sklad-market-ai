@@ -46,6 +46,27 @@ public class PublicBusinessClient {
         return envelope == null ? null : envelope.data();
     }
 
+    /**
+     * Live, read-only fallback for dashboard discovery while the separate AI index is warming up.
+     * The catalog endpoint already enforces the platform's public product visibility rules.
+     */
+    public RemoteBusinessProductPage searchPublicProducts(String query, int perPage) {
+        GatewayEnvelope<RemoteBusinessProductPage> envelope = get(
+                "/api/v1/catalog?q={query}&page=1&perPage={perPage}",
+                new ParameterizedTypeReference<GatewayEnvelope<RemoteBusinessProductPage>>() {},
+                query, perPage);
+        return envelope == null ? null : envelope.data();
+    }
+
+    /** Live, read-only verified-company fallback used only when the AI index has no match. */
+    public RemoteCompanyPage searchVerifiedCompanies(String query, int perPage) {
+        GatewayEnvelope<RemoteCompanyPage> envelope = get(
+                "/api/v1/companies/search?q={query}&verified=true&page=1&per_page={perPage}",
+                new ParameterizedTypeReference<GatewayEnvelope<RemoteCompanyPage>>() {},
+                query, perPage);
+        return envelope == null ? null : envelope.data();
+    }
+
     private <T> T get(String uri, ParameterizedTypeReference<T> type, Object... variables) {
         try {
             return restClient.get().uri(uri, variables)

@@ -19,6 +19,7 @@ import {
   deleteListingImage,
   getConversationMessages,
   getDraftDetails,
+  getSimilarProducts,
   listConversations,
   publishBuyingIntent,
   searchBusinesses,
@@ -122,6 +123,20 @@ describe("AI-owned HTTP client", () => {
     expect(captured.params).toEqual({ q: "cement", types: "PRODUCT,COMPANY", limit: 12 });
     expect(header(captured, "Accept-Language")).toBe("UZ");
     expect(header(captured, "Authorization")).toBe("Bearer access-business");
+  });
+
+  it("calls the bounded similar-products recommender", async () => {
+    let captured;
+    aiHttp.defaults.adapter = (config) => {
+      captured = config;
+      return success(config, { items: [] });
+    };
+
+    await getSimilarProducts(42, { limit: 99 });
+
+    expect(captured.url).toBe("/ai/similar/42");
+    expect(captured.method).toBe("get");
+    expect(captured.params).toEqual({ limit: 12 });
   });
 
   it("refreshes a failed JSON request once and calls the logout listener after a final 401", async () => {
