@@ -107,7 +107,7 @@ describe("DashboardAiSearchPanel", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ask AI about these results" })).toHaveAttribute(
       "href",
-      expect.stringContaining("/ai-agent?prompt=")
+      expect.stringContaining("/ai-agent?new=1&prompt=")
     );
   });
 

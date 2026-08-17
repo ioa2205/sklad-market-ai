@@ -111,6 +111,7 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
     items: [],
     freshness: null,
     errorStatus: null,
+    errorCode: null,
   });
   const [filter, setFilter] = useState("ALL");
   const [retryToken, setRetryToken] = useState(0);
@@ -126,6 +127,7 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
         items: [],
         freshness: null,
         errorStatus: null,
+        errorCode: null,
       });
       searchBusinesses(
         { query: cleanQuery, types: ["PRODUCT", "COMPANY"], limit: 8 },
@@ -139,6 +141,7 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
             items: Array.isArray(response?.items) ? response.items.slice(0, 8) : [],
             freshness: response?.indexFreshness ?? null,
             errorStatus: null,
+            errorCode: null,
           });
         })
         .catch((error) => {
@@ -149,6 +152,7 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
             items: [],
             freshness: null,
             errorStatus: error?.status ?? null,
+            errorCode: error?.aiCode ?? null,
           });
         });
     }, 650);
@@ -163,16 +167,18 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
 
   const visibleState = state.query === cleanQuery
     ? state
-    : { status: "loading", items: [], freshness: null, errorStatus: null };
+    : { status: "loading", items: [], freshness: null, errorStatus: null, errorCode: null };
   const filteredItems = visibleState.items.filter(
     (item) => filter === "ALL" || asText(item.type).toUpperCase() === filter
   );
 
   const locale = i18n.resolvedLanguage || i18n.language || "ru";
   const prompt = t("home.aiAssistant.queryPrompt", { query: cleanQuery });
-  const errorKey = visibleState.errorStatus === 429
-    ? "home.aiAssistant.panel.rateLimited"
-    : "home.aiAssistant.panel.error";
+  const errorKey = visibleState.errorCode === "budget_exceeded"
+    ? "home.aiAssistant.panel.budgetExceeded"
+    : visibleState.errorStatus === 429
+      ? "home.aiAssistant.panel.rateLimited"
+      : "home.aiAssistant.panel.error";
 
   return (
     <aside
@@ -261,7 +267,7 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
         )}
 
         <Link
-          to={`/ai-agent?prompt=${encodeURIComponent(prompt)}`}
+          to={`/ai-agent?new=1&prompt=${encodeURIComponent(prompt)}`}
           className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-ink-900 px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 dark:bg-white dark:text-ink-900 dark:hover:bg-brand-100"
         >
           {t("home.aiAssistant.panel.continueChat")}

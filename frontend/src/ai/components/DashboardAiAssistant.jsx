@@ -31,7 +31,7 @@ export default function DashboardAiAssistant({ user, isLoggedIn }) {
       navigate("/ai-agent");
       return;
     }
-    navigate(`/ai-agent?prompt=${encodeURIComponent(cleanPrompt)}`);
+    navigate(`/ai-agent?new=1&prompt=${encodeURIComponent(cleanPrompt)}`);
   };
 
   return (

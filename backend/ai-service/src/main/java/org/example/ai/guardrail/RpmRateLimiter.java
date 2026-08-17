@@ -17,7 +17,7 @@ import java.time.Duration;
 public class RpmRateLimiter {
 
     private final double capacity;
-    private final Cache<String, Bucket> buckets;
+    private final Cache<BucketKey, Bucket> buckets;
 
     public RpmRateLimiter(@Value("${ai.limits.rate-limit-rpm:10}") int rpm) {
         this.capacity = Math.max(rpm, 0);
@@ -25,12 +25,24 @@ public class RpmRateLimiter {
     }
 
     public boolean tryConsume(String userSub) {
-        if (capacity <= 0) {
+        return tryConsume(userSub, capacity);
+    }
+
+    /** Uses an operation-specific capacity while retaining the same bounded token-bucket store. */
+    public boolean tryConsume(String userSub, int rpm) {
+        return tryConsume(userSub, (double) Math.max(rpm, 0));
+    }
+
+    private boolean tryConsume(String userSub, double requestedCapacity) {
+        if (requestedCapacity <= 0) {
             return false;
         }
-        Bucket bucket = buckets.get(userSub, key -> new Bucket(capacity));
-        return bucket.tryConsume(capacity);
+        BucketKey key = new BucketKey(userSub, requestedCapacity);
+        Bucket bucket = buckets.get(key, ignored -> new Bucket(requestedCapacity));
+        return bucket.tryConsume(requestedCapacity);
     }
+
+    private record BucketKey(String key, double capacity) { }
 
     private static final class Bucket {
         private double tokens;

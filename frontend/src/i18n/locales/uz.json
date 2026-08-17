@@ -95,6 +95,7 @@
         "verified": "Tasdiqlangan",
         "openResult": "Natijani ochish",
         "rateLimited": "AI qidiruviga so'rovlar juda ko'p. Biroz kuting.",
+        "budgetExceeded": "Bugungi mazmuniy AI limiti tugadi. Oddiy katalog qidiruvi ishlashda davom etadi.",
         "error": "AI natijalari vaqtincha mavjud emas. Oddiy qidiruv ishlashda davom etadi.",
         "retry": "Qayta urinish",
         "empty": "AI bu qidiruv uchun qo'shimcha moslik topmadi.",

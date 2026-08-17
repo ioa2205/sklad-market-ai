@@ -53,7 +53,9 @@ public class GlobalExceptionHandler {
         if (status.is5xxServerError()) {
             log.warn("AI provider error on JSON endpoint (code={}): {}", e.code(), e.getMessage());
         }
-        return ResponseEntity.status(status).body(ApiResponse.errorResponse(e.getMessage()));
+        return ResponseEntity.status(status)
+                .header("X-AI-Error-Code", e.code().wireCode())
+                .body(ApiResponse.errorResponse(e.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

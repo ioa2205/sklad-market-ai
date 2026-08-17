@@ -38,4 +38,15 @@ class RpmRateLimiterTest {
 
         assertThat(limiter.tryConsume("user-1")).isFalse();
     }
+
+    @Test
+    void operationSpecificCapacityDoesNotChangeTheDefaultBucket() {
+        RpmRateLimiter limiter = new RpmRateLimiter(1);
+
+        assertThat(limiter.tryConsume("dashboard:user-1", 2)).isTrue();
+        assertThat(limiter.tryConsume("dashboard:user-1", 2)).isTrue();
+        assertThat(limiter.tryConsume("dashboard:user-1", 2)).isFalse();
+        assertThat(limiter.tryConsume("chat:user-1")).isTrue();
+        assertThat(limiter.tryConsume("chat:user-1")).isFalse();
+    }
 }

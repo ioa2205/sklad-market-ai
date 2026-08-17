@@ -63,7 +63,17 @@ public class BusinessSearchService {
     }
 
     public BusinessSearchResponse search(BusinessSearchCriteria criteria, ToolExecutionContext context) {
-        float[] vector = optionalEmbedding(criteria.query());
+        return search(criteria, context, true);
+    }
+
+    /**
+     * Dashboard REST search can disable the paid semantic leg after a user's daily AI budget is
+     * exhausted. Local lexical and live public-catalog discovery still work instead of returning
+     * a misleading rate-limit screen for a free fallback path.
+     */
+    public BusinessSearchResponse search(
+            BusinessSearchCriteria criteria, ToolExecutionContext context, boolean semanticEnabled) {
+        float[] vector = semanticEnabled ? optionalEmbedding(criteria.query()) : null;
         int candidates = Math.min(200, Math.max(50, criteria.limit() * 12));
         List<BusinessSearchItem> ranked = new ArrayList<>();
 

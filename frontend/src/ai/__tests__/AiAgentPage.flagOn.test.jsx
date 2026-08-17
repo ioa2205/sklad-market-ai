@@ -89,13 +89,17 @@ describe("AiAgentPage — flag on, logged in (streaming happy path)", () => {
   });
 
   it("automatically sends an AI-assisted dashboard search prompt once", async () => {
+    localStorage.setItem(
+      "skladx_ai_conversation_id:username%3Abuyer-test%7Crole%3ABUYER",
+      "old-conversation"
+    );
     streamAiMessageMock.mockImplementation(async ({ onEvent }) => {
       onEvent({ event: "token", data: { text: "I found matching products and companies." } });
       onEvent({ event: "done", data: { messageId: "m-dashboard", conversationId: "conv-1" } });
     });
 
     render(
-      <MemoryRouter initialEntries={["/ai-agent?prompt=Find%20industrial%20pumps"]}>
+      <MemoryRouter initialEntries={["/ai-agent?new=1&prompt=Find%20industrial%20pumps"]}>
         <AiAgentPage />
       </MemoryRouter>
     );
@@ -104,8 +108,14 @@ describe("AiAgentPage — flag on, logged in (streaming happy path)", () => {
     expect(await screen.findByText("I found matching products and companies.")).toBeInTheDocument();
     expect(streamAiMessageMock).toHaveBeenCalledTimes(1);
     expect(streamAiMessageMock).toHaveBeenCalledWith(
-      expect.objectContaining({ content: "Find industrial pumps" })
+      expect.objectContaining({ conversationId: "conv-1", content: "Find industrial pumps" })
     );
+    expect(createConversationMock).toHaveBeenCalledTimes(1);
+    expect(
+      localStorage.getItem(
+        "skladx_ai_conversation_id:username%3Abuyer-test%7Crole%3ABUYER"
+      )
+    ).toBe("conv-1");
   });
 
   it("shows tool status chips while a tool is running, then resolves", async () => {

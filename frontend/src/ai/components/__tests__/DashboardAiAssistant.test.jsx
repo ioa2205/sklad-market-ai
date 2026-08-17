@@ -32,7 +32,7 @@ describe("DashboardAiAssistant", () => {
     fireEvent.click(screen.getByRole("button", { name: "Recommend suitable suppliers" }));
 
     const location = screen.getByTestId("location").textContent;
-    expect(location).toMatch(/^\/ai-agent\?prompt=/);
+    expect(location).toMatch(/^\/ai-agent\?new=1&prompt=/);
     expect(decodeURIComponent(location)).toContain("Recommend suitable suppliers");
   });
 

@@ -120,6 +120,7 @@ aiHttp.interceptors.response.use(
     const normalized = new Error(message);
     normalized.status = response?.status;
     normalized.code = error.code;
+    normalized.aiCode = response?.headers?.["x-ai-error-code"] ?? null;
     return Promise.reject(normalized);
   }
 );

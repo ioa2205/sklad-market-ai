@@ -28,6 +28,8 @@ import java.util.Map;
 import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,6 +59,7 @@ class BusinessDiscoveryControllerTest {
     @BeforeEach
     void guardsAllow() {
         when(rateLimiter.tryConsume(anyString())).thenReturn(true);
+        when(rateLimiter.tryConsume(anyString(), anyInt())).thenReturn(true);
         when(budgetGuard.hasRemainingBudget(anyString())).thenReturn(true);
     }
 
@@ -68,7 +71,7 @@ class BusinessDiscoveryControllerTest {
 
     @Test
     void authenticatedBusinessSearchIsRoleOpenAndReturnsTypedEnvelope() throws Exception {
-        when(searchService.search(any(), any())).thenReturn(
+        when(searchService.search(any(), any(), anyBoolean())).thenReturn(
                 new BusinessSearchResponse("cement", 0, List.of(), BusinessSearchService.SCORE_MEANING,
                         new BusinessIndexFreshness(Instant.parse("2026-08-11T00:00:00Z"), false,
                                 "product=SUCCESS;company=SUCCESS", "fresh")));
@@ -80,6 +83,22 @@ class BusinessDiscoveryControllerTest {
                 .andExpect(jsonPath("$.data.query").value("cement"))
                 .andExpect(jsonPath("$.data.indexFreshness.stale").value(false));
         verify(usageLedgerService).recordEmbeddingRequest(anyString(), org.mockito.ArgumentMatchers.eq("cement"));
+    }
+
+    @Test
+    void exhaustedSemanticBudgetFallsBackToFreeDiscoveryInsteadOfReturning429() throws Exception {
+        when(budgetGuard.hasRemainingBudget(anyString())).thenReturn(false);
+        when(searchService.search(any(), any(), org.mockito.ArgumentMatchers.eq(false))).thenReturn(
+                new BusinessSearchResponse("cement", 0, List.of(), BusinessSearchService.SCORE_MEANING,
+                        new BusinessIndexFreshness(null, true, "product=NEVER_RUN;company=NEVER_RUN", "fallback")));
+
+        mockMvc.perform(get("/api/v1/ai/business-search").param("q", "cement")
+                        .with(jwtFor("BUYER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(searchService).search(any(), any(), org.mockito.ArgumentMatchers.eq(false));
+        verify(usageLedgerService, never()).recordEmbeddingRequest(anyString(), anyString());
     }
 
     @Test

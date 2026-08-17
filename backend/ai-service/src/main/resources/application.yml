@@ -82,6 +82,9 @@ ai:
     max-image-bytes: ${AI_SELLER_MAX_IMAGE_BYTES:6000000}
   limits:
     rate-limit-rpm: ${AI_RATE_LIMIT_RPM:10}
+    # Dashboard search is debounced but naturally more frequent than explicit chat turns. It uses
+    # an isolated bucket, so raising this does not weaken chat/supplier write protection.
+    discovery-rate-limit-rpm: ${AI_DISCOVERY_RATE_LIMIT_RPM:30}
     daily-token-budget: ${AI_DAILY_TOKEN_BUDGET:200000}
     max-input-chars: 4000
     history-window-messages: 20

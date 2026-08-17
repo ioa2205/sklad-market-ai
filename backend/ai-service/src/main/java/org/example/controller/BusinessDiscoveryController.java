@@ -19,6 +19,7 @@ import org.example.ai.tool.ToolExecutionContext;
 import org.example.dto.ApiResponse;
 import org.example.security.AiSecurityUtil;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +43,7 @@ public class BusinessDiscoveryController {
     private final TokenBudgetGuard budgetGuard;
     private final UsageLedgerService usageLedgerService;
     private final AiMetrics metrics;
+    private final int discoveryRateLimitRpm;
 
     public BusinessDiscoveryController(
             BusinessSearchService searchService,
@@ -50,7 +52,8 @@ public class BusinessDiscoveryController {
             RpmRateLimiter rateLimiter,
             TokenBudgetGuard budgetGuard,
             UsageLedgerService usageLedgerService,
-            AiMetrics metrics) {
+            AiMetrics metrics,
+            @Value("${ai.limits.discovery-rate-limit-rpm:30}") int discoveryRateLimitRpm) {
         this.searchService = searchService;
         this.supplierService = supplierService;
         this.categoryResolver = categoryResolver;
@@ -58,6 +61,7 @@ public class BusinessDiscoveryController {
         this.budgetGuard = budgetGuard;
         this.usageLedgerService = usageLedgerService;
         this.metrics = metrics;
+        this.discoveryRateLimitRpm = Math.max(discoveryRateLimitRpm, 0);
     }
 
     @GetMapping("/business-search")
@@ -72,13 +76,14 @@ public class BusinessDiscoveryController {
             @RequestParam(value = "limit", defaultValue = "10") int limit,
             @RequestHeader(value = "Accept-Language", required = false) String language) {
         ToolExecutionContext context = currentContext(language);
-        guard("business-search", context.userSub());
+        boolean semanticEnabled = guardDiscoverySearch(context.userSub());
         Long categoryId = resolveCategory(categorySlug, context);
         long started = System.currentTimeMillis();
         try {
             BusinessSearchResponse response = searchService.search(new BusinessSearchCriteria(
-                    query, parseTypes(rawTypes), categoryId, regionId, minPrice, maxPrice, currency, limit), context);
-            usageLedgerService.recordEmbeddingRequest(context.userSub(), query);
+                    query, parseTypes(rawTypes), categoryId, regionId, minPrice, maxPrice, currency, limit),
+                    context, semanticEnabled);
+            if (semanticEnabled) usageLedgerService.recordEmbeddingRequest(context.userSub(), query);
             metrics.recordBusinessDiscovery("business-search", "ok", System.currentTimeMillis() - started);
             return ApiResponse.successResponse(response);
         } catch (RuntimeException e) {
@@ -143,5 +148,12 @@ public class BusinessDiscoveryController {
         if (!budgetGuard.hasRemainingBudget(userSub)) {
             throw new AiChatException(AiErrorCode.BUDGET_EXCEEDED, "Daily usage limit reached.");
         }
+    }
+
+    private boolean guardDiscoverySearch(String userSub) {
+        if (!rateLimiter.tryConsume("rest-business-search:" + userSub, discoveryRateLimitRpm)) {
+            throw new AiChatException(AiErrorCode.RATE_LIMITED, "Too many requests, please slow down.");
+        }
+        return budgetGuard.hasRemainingBudget(userSub);
     }
 }

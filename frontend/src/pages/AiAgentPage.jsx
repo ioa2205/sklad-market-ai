@@ -239,6 +239,7 @@ function RealAiAgentPage() {
   const isSeller = normalizeRole(user?.role) === "SELLER";
   const name = preferredName(user);
   const sendChatMessage = chat.send;
+  const startFreshConversation = chat.startFreshConversation;
 
   const interactionDisabled =
     !chat.accountReady ||
@@ -254,14 +255,34 @@ function RealAiAgentPage() {
   };
 
   const initialPrompt = String(searchParams.get("prompt") || "").trim().slice(0, 4000);
+  const startNewChat = searchParams.get("new") === "1";
   useEffect(() => {
-    if (!initialPrompt || interactionDisabled || consumedPromptRef.current === initialPrompt) return;
-    consumedPromptRef.current = initialPrompt;
+    const promptKey = `${startNewChat ? "new" : "continue"}:${initialPrompt}`;
+    if (
+      !initialPrompt ||
+      !accountKey ||
+      (!startNewChat && interactionDisabled) ||
+      consumedPromptRef.current === promptKey
+    ) return;
+    consumedPromptRef.current = promptKey;
+    // Dashboard prompt chips are explicit tasks, so they must not inherit an older chat's
+    // context. Resetting refs is synchronous; send() then creates a fresh server conversation.
+    if (startNewChat) startFreshConversation();
     void sendChatMessage(initialPrompt);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("prompt");
+    nextParams.delete("new");
     setSearchParams(nextParams, { replace: true });
-  }, [initialPrompt, interactionDisabled, searchParams, sendChatMessage, setSearchParams]);
+  }, [
+    accountKey,
+    initialPrompt,
+    interactionDisabled,
+    searchParams,
+    sendChatMessage,
+    setSearchParams,
+    startFreshConversation,
+    startNewChat,
+  ]);
 
   return (
     <AppShell>
