@@ -13,6 +13,7 @@ import ChatMessages from "../ai/components/ChatMessages";
 import ChatInput from "../ai/components/ChatInput";
 import ErrorCard from "../ai/components/ErrorCard";
 import SellerListingHelper from "../ai/components/SellerListingHelper";
+import AiAgentLogo from "../ai/components/AiAgentLogo";
 
 const AI_REPLY_DELAY_MS = 700;
 
@@ -289,9 +290,7 @@ function RealAiAgentPage() {
       <div lang={locale} className="max-w-5xl mx-auto h-full flex flex-col px-4 sm:px-6 py-5 sm:py-8">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2 text-sm font-semibold text-ink-800 dark:text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-[10px] font-extrabold tracking-tight text-white shadow-sm">
-              AI
-            </span>
+            <AiAgentLogo size={32} className="shadow-sm" />
             {t("greeting.badge")}
           </div>
           {isSeller && (
@@ -319,9 +318,7 @@ function RealAiAgentPage() {
             <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-3xl border border-ink-100 bg-gradient-to-b from-white to-brand-50/35 px-4 py-10 text-center dark:border-[#1C1C1C] dark:from-[#0D0D0D] dark:to-[#10172A]/60 sm:px-8">
               <div className="pointer-events-none absolute -top-24 h-48 w-48 rounded-full bg-brand-300/20 blur-3xl dark:bg-brand-500/10" />
               <div className="relative w-full max-w-3xl">
-                <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-extrabold text-white shadow-lg shadow-brand-500/20">
-                  AI
-                </span>
+                <AiAgentLogo size={56} className="mx-auto mb-5 shadow-lg shadow-brand-500/20" />
                 <h1 className="mb-3 font-display text-2xl font-bold text-ink-900 dark:text-white sm:text-3xl">
                   {name ? t("greeting.titleNamed", { name }) : t("greeting.title")}
                 </h1>

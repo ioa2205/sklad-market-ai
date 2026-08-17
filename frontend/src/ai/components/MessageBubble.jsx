@@ -3,6 +3,7 @@ import Markdown from "../lib/markdown";
 import ToolStatusChip from "./ToolStatusChip";
 import DraftLeadCard from "./DraftLeadCard";
 import StructuredResults from "./StructuredResults";
+import AiAgentLogo from "./AiAgentLogo";
 
 export default function MessageBubble({
   message,
@@ -18,53 +19,58 @@ export default function MessageBubble({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`${hasResults ? "max-w-[98%] sm:max-w-[95%]" : "max-w-[85%] sm:max-w-[80%]"} px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-        isUser
-          ? "bg-brand-600 text-white self-end"
-          : "bg-white dark:bg-[#0D0D0D] border border-ink-100 dark:border-[#1C1C1C] text-ink-700 dark:text-ink-200 self-start"
-      }`}
+      className={`${hasResults ? "max-w-[98%] sm:max-w-[95%]" : "max-w-[88%] sm:max-w-[82%]"} flex items-start gap-2 ${isUser ? "self-end" : "self-start"}`}
     >
-      {!isUser && message.toolEvents?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {message.toolEvents.map((te, i) => (
-            <ToolStatusChip key={i} tool={te.tool} status={te.status} summary={te.summary} />
-          ))}
-        </div>
-      )}
+      {!isUser && <AiAgentLogo size={28} className="mt-1" />}
+      <div
+        className={`min-w-0 rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+          isUser
+            ? "bg-brand-600 text-white"
+            : "border border-ink-100 bg-white text-ink-700 dark:border-[#1C1C1C] dark:bg-[#0D0D0D] dark:text-ink-200"
+        }`}
+      >
+        {!isUser && message.toolEvents?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {message.toolEvents.map((te, i) => (
+              <ToolStatusChip key={i} tool={te.tool} status={te.status} summary={te.summary} />
+            ))}
+          </div>
+        )}
 
-      {isUser ? (
-        <span className="whitespace-pre-wrap break-words">{message.text}</span>
-      ) : (
-        <Markdown text={message.text} />
-      )}
+        {isUser ? (
+          <span className="whitespace-pre-wrap break-words">{message.text}</span>
+        ) : (
+          <Markdown text={message.text} />
+        )}
 
-      {!isUser && message.draft && (
-        <DraftLeadCard
-          draft={message.draft}
-          onConfirm={(overrides) => onConfirmDraft?.(message.id, message.draft.draftId, overrides)}
-          onCancel={() => onCancelDraft?.(message.id, message.draft.draftId)}
-        />
-      )}
+        {!isUser && message.draft && (
+          <DraftLeadCard
+            draft={message.draft}
+            onConfirm={(overrides) => onConfirmDraft?.(message.id, message.draft.draftId, overrides)}
+            onCancel={() => onCancelDraft?.(message.id, message.draft.draftId)}
+          />
+        )}
 
-      {hasResults && (
-        <StructuredResults
-          resultSets={message.resultSets}
-          onPublishIntent={(resultSetIndex, intentId) =>
-            onPublishIntent?.(message.id, resultSetIndex, intentId)
-          }
-          onCloseIntent={(resultSetIndex, intentId) =>
-            onCloseIntent?.(message.id, resultSetIndex, intentId)
-          }
-        />
-      )}
+        {hasResults && (
+          <StructuredResults
+            resultSets={message.resultSets}
+            onPublishIntent={(resultSetIndex, intentId) =>
+              onPublishIntent?.(message.id, resultSetIndex, intentId)
+            }
+            onCloseIntent={(resultSetIndex, intentId) =>
+              onCloseIntent?.(message.id, resultSetIndex, intentId)
+            }
+          />
+        )}
 
-      {message.streaming && !message.text && (
-        <span className="inline-flex gap-1 items-center text-ink-400" aria-label="typing">
-          <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
-          <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
-          <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" />
-        </span>
-      )}
+        {message.streaming && !message.text && (
+          <span className="inline-flex gap-1 items-center text-ink-400" aria-label="typing">
+            <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" />
+          </span>
+        )}
+      </div>
     </motion.div>
   );
 }

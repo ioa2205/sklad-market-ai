@@ -3,15 +3,7 @@ import { ArrowRight2 } from "iconsax-reactjs";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { isAiAgentEnabled } from "../flag";
-
-function SparkleMark() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none">
-      <path d="M12 2.75c.55 4.2 2.85 6.5 7.25 7.25-4.4.75-6.7 3.05-7.25 7.25C11.45 13.05 9.15 10.75 4.75 10 9.15 9.25 11.45 6.95 12 2.75Z" fill="currentColor" />
-      <path d="M18.25 15.25c.25 1.9 1.35 3 3.25 3.25-1.9.25-3 1.35-3.25 3.25-.25-1.9-1.35-3-3.25-3.25 1.9-.25 3-1.35 3.25-3.25Z" fill="currentColor" opacity=".65" />
-    </svg>
-  );
-}
+import AiAgentLogo from "./AiAgentLogo";
 
 function preferredName(user) {
   const value = user?.firstName || user?.name || user?.username;
@@ -45,9 +37,7 @@ export default function DashboardAiAssistant({ user, isLoggedIn }) {
       <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
-              <SparkleMark />
-            </span>
+            <AiAgentLogo size={36} className="shadow-sm" />
             <span className="rounded-full border border-brand-200 bg-white/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-700 dark:border-brand-500/25 dark:bg-white/5 dark:text-brand-300">
               {t("home.aiAssistant.badge")}
             </span>

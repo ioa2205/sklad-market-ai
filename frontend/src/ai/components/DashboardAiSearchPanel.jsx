@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { searchBusinesses } from "../api/aiClient";
 import { isAiAgentEnabled } from "../flag";
 import { t as aiT } from "../i18n";
+import AiAgentLogo from "./AiAgentLogo";
 
 const FILTERS = ["ALL", "PRODUCT", "COMPANY"];
 
@@ -187,9 +188,7 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
     >
       <div className="border-b border-brand-100 bg-gradient-to-br from-brand-50 to-white p-4 dark:border-brand-500/15 dark:from-[#10172A] dark:to-[#0D0D0D]">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-[10px] font-extrabold text-white shadow-sm">
-            AI
-          </span>
+          <AiAgentLogo size={36} className="shadow-sm" />
           <div className="min-w-0">
             <h3 className="font-display text-sm font-bold text-ink-900 dark:text-white">
               {t("home.aiAssistant.panel.title")}
