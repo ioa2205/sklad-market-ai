@@ -1,15 +1,11 @@
 package org.example.controller;
 
 import org.example.ai.embedding.EmbeddingSearchService;
-import org.example.ai.guardrail.RpmRateLimiter;
-import org.example.ai.guardrail.TokenBudgetGuard;
-import org.example.ai.guardrail.UsageLedgerService;
 import org.example.ai.observability.AiMetrics;
 import org.example.config.SecurityConfig;
 import org.example.dto.SearchResultItem;
 import org.example.exception.AiNotFoundException;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -23,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,22 +45,7 @@ class AiSearchControllerTest {
     private EmbeddingSearchService searchService;
 
     @MockBean
-    private RpmRateLimiter rateLimiter;
-
-    @MockBean
-    private TokenBudgetGuard budgetGuard;
-
-    @MockBean
-    private UsageLedgerService usageLedgerService;
-
-    @MockBean
     private AiMetrics metrics;
-
-    @BeforeEach
-    void allowGuardedSearchByDefault() {
-        when(rateLimiter.tryConsume(anyString())).thenReturn(true);
-        when(budgetGuard.hasRemainingBudget(anyString())).thenReturn(true);
-    }
 
     private org.springframework.test.web.servlet.request.RequestPostProcessor buyer() {
         return jwt().jwt(b -> b.claim("realm_access", Map.of("roles", List.of("BUYER"))))
@@ -94,7 +74,6 @@ class AiSearchControllerTest {
                 .andExpect(jsonPath("$.data.count").value(1))
                 .andExpect(jsonPath("$.data.items[0].slug").value("rice-basmati"))
                 .andExpect(jsonPath("$.data.items[0].score").value(0.83));
-        verify(usageLedgerService).recordEmbeddingRequest(anyString(), eq("рис"));
     }
 
     @Test
@@ -118,24 +97,11 @@ class AiSearchControllerTest {
     }
 
     @Test
-    void search_rateLimited_returns429WithoutCallingProvider() throws Exception {
-        when(rateLimiter.tryConsume(anyString())).thenReturn(false);
-
+    void search_isNotSubjectToChatRequestLimits() throws Exception {
+        when(searchService.search(eq("cement"), any())).thenReturn(List.of());
         mockMvc.perform(get("/api/v1/ai/search").param("q", "cement").with(buyer()))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.success").value(false));
-
-        verify(searchService, org.mockito.Mockito.never()).search(any(), any());
-    }
-
-    @Test
-    void search_budgetExhausted_returns429WithoutCallingProvider() throws Exception {
-        when(budgetGuard.hasRemainingBudget(anyString())).thenReturn(false);
-
-        mockMvc.perform(get("/api/v1/ai/search").param("q", "cement").with(buyer()))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.success").value(false));
-
-        verify(searchService, org.mockito.Mockito.never()).search(any(), any());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+        verify(searchService).search(eq("cement"), any());
     }
 }

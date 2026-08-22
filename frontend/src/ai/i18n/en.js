@@ -260,5 +260,23 @@ export default {
   },
   admin: {
     triageNote: "The assistant only shows a summary — decisions are made in the moderator dashboard.",
+    rateLimits: {
+      title: "AI chat request limits",
+      open: "Manage",
+      close: "Close",
+      help: "RPM controls chat requests per minute; the daily token budget controls Gemini usage. Dashboard AI search and similar-product results do not consume either allowance. Set 0 to block chat for a user.",
+      loading: "Loading AI users…",
+      empty: "No AI chat users have been registered yet.",
+      inputLabel: "Requests per minute for {user}",
+      budgetInputLabel: "Daily token budget for {user}",
+      rpmLabel: "Requests / minute",
+      budgetLabel: "Daily token budget",
+      usage: "Today: {used}, remaining: {remaining}",
+      save: "Save",
+      reset: "Default",
+      invalidRpm: "Enter an RPM value from 0 to 10,000.",
+      invalidBudget: "Enter a daily token budget from 0 to 100,000,000.",
+      error: "The AI limit settings could not be loaded or saved. Chat remains available.",
+    },
   },
 };

@@ -9,6 +9,7 @@ import org.example.ai.matching.dto.BuyerOpportunity;
 import org.example.ai.matching.dto.BuyerOpportunityResult;
 import org.example.ai.tool.PlatformLanguage;
 import org.example.ai.tool.ToolArgs;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -41,6 +42,7 @@ public class BuyerOpportunityService {
     private final GatewayClient gatewayClient;
     private final Clock clock;
 
+    @Autowired
     public BuyerOpportunityService(GatewayClient gatewayClient) {
         this(gatewayClient, Clock.systemUTC());
     }

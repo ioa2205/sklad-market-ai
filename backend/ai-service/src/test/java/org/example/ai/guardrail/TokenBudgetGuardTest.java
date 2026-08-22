@@ -20,10 +20,13 @@ class TokenBudgetGuardTest {
 
     @Mock
     private UsageLedgerRepository usageLedgerRepository;
+    @Mock
+    private AiChatRateLimitService chatLimitService;
 
     @Test
     void noUsageYetToday_fullBudgetRemaining() {
-        TokenBudgetGuard guard = new TokenBudgetGuard(usageLedgerRepository, 1000L);
+        TokenBudgetGuard guard = new TokenBudgetGuard(usageLedgerRepository, chatLimitService);
+        when(chatLimitService.dailyTokenBudgetFor("user-1")).thenReturn(1000L);
         when(usageLedgerRepository.findByUserSubAndDay(eq("user-1"), any(LocalDate.class))).thenReturn(Optional.empty());
 
         assertThat(guard.hasRemainingBudget("user-1")).isTrue();
@@ -32,7 +35,8 @@ class TokenBudgetGuardTest {
 
     @Test
     void usageAtOrAboveBudget_noRemainingBudget() {
-        TokenBudgetGuard guard = new TokenBudgetGuard(usageLedgerRepository, 1000L);
+        TokenBudgetGuard guard = new TokenBudgetGuard(usageLedgerRepository, chatLimitService);
+        when(chatLimitService.dailyTokenBudgetFor("user-1")).thenReturn(1000L);
         UsageLedger entry = new UsageLedger();
         entry.setTokensIn(600L);
         entry.setTokensOut(500L);
@@ -44,7 +48,8 @@ class TokenBudgetGuardTest {
 
     @Test
     void usageBelowBudget_returnsExactRemainder() {
-        TokenBudgetGuard guard = new TokenBudgetGuard(usageLedgerRepository, 1000L);
+        TokenBudgetGuard guard = new TokenBudgetGuard(usageLedgerRepository, chatLimitService);
+        when(chatLimitService.dailyTokenBudgetFor("user-1")).thenReturn(1000L);
         UsageLedger entry = new UsageLedger();
         entry.setTokensIn(300L);
         entry.setTokensOut(200L);

@@ -105,10 +105,7 @@ describe("DashboardAiSearchPanel", () => {
       screen.getByText("AI matches are temporarily unavailable. Normal search is still working.")
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ask AI about these results" })).toHaveAttribute(
-      "href",
-      expect.stringContaining("/ai-agent?new=1&prompt=")
-    );
+    expect(screen.queryByRole("link", { name: "Ask AI about these results" })).not.toBeInTheDocument();
   });
 
   it("does not call the authenticated AI endpoint for a logged-out visitor", async () => {

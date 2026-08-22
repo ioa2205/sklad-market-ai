@@ -69,6 +69,9 @@ Ping (requires a Bearer token once Keycloak is reachable): `curl -H "Authorizati
   is their call (PLAN.md §8); ai-service does not touch their frontend.
 - `POST /api/v1/ai/admin/reindex` · `GET /api/v1/ai/admin/reindex/status` — `ROLE_ADMIN`/
   `ROLE_SUPER_ADMIN` only (Phase 5); trigger a catalog re-embed and read the last run's status.
+- `GET|PUT|DELETE /api/v1/ai/admin/rate-limits[/{userSub}]` — `ROLE_ADMIN`/
+  `ROLE_SUPER_ADMIN` only; list, override, or reset per-user chat requests per minute. Users are
+  registered inside the AI database when they chat; no core user-service schema is modified.
 - `POST /api/v1/ai/seller/suggest-listing` — `ROLE_SELLER` only (Phase 6); vision-assisted
   category + attribute suggestion, strictly validated against the real category schema (copy-to-form,
   never auto-submit).
@@ -82,10 +85,12 @@ Ping (requires a Bearer token once Keycloak is reachable): `curl -H "Authorizati
   blocking backoff, loses the real HTTP status) is disabled via `HttpRetryOptions.attempts(1)`;
   the provider does its own single retry with jitter on the initial call, then maps the real
   exception to one of the SSE protocol's error codes.
-- Guardrails (`org.example.ai.guardrail`) run before every provider call: a Caffeine-backed
-  per-user token-bucket RPM limiter (`AI_RATE_LIMIT_RPM`; `0` is a hard kill switch), a daily
+- Guardrails (`org.example.ai.guardrail`) run before every generated chat turn: a Caffeine-backed
+  per-user token-bucket RPM limiter (`AI_RATE_LIMIT_RPM` default, with AI-admin per-user overrides;
+  `0` is a hard kill switch), a daily
   token budget check against `usage_ledger` (`AI_DAILY_TOKEN_BUDGET`), a 4000-char input cap, and
-  a 20-message history window.
+  a 20-message history window. Read-only dashboard search, semantic search, and similar-product
+  endpoints do not consume either the chat RPM bucket or the daily usage ledger.
 - System prompt v1 lives at `src/main/resources/prompts/system-agent.md`: SKLADx identity and
   scope, replies in the user's message language (uz/ru/en, Russian default), states plainly that
   it cannot browse the catalog yet (no tools until Phase 2), and treats all quoted platform

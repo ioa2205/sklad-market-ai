@@ -359,7 +359,6 @@ public class KeycloakServiceImpl implements KeycloakService {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         try {
-            log.info("Token request body: {}", body);  // DEBUG
             ResponseEntity<TokenResponseDTO> response = restTemplate.postForEntity(
                     masterTokenUrl,
                     request, TokenResponseDTO.class);  // TokenResponse DTO yarating

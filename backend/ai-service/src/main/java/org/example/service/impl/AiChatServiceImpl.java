@@ -6,7 +6,7 @@ import org.example.ai.audit.ToolAuditService;
 import org.example.ai.audit.ToolAuditSanitizer;
 import org.example.ai.error.AiChatException;
 import org.example.ai.error.AiErrorCode;
-import org.example.ai.guardrail.RpmRateLimiter;
+import org.example.ai.guardrail.AiChatRateLimitService;
 import org.example.ai.guardrail.TokenBudgetGuard;
 import org.example.ai.guardrail.UsageLedgerService;
 import org.example.ai.observability.AiMetrics;
@@ -77,7 +77,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final ChatModelProvider chatModelProvider;
-    private final RpmRateLimiter rateLimiter;
+    private final AiChatRateLimitService rateLimiter;
     private final TokenBudgetGuard budgetGuard;
     private final UsageLedgerService usageLedgerService;
     private final SystemPromptProvider systemPromptProvider;
@@ -99,7 +99,7 @@ public class AiChatServiceImpl implements AiChatService {
             ConversationRepository conversationRepository,
             MessageRepository messageRepository,
             ChatModelProvider chatModelProvider,
-            RpmRateLimiter rateLimiter,
+            AiChatRateLimitService rateLimiter,
             TokenBudgetGuard budgetGuard,
             UsageLedgerService usageLedgerService,
             SystemPromptProvider systemPromptProvider,
@@ -164,8 +164,11 @@ public class AiChatServiceImpl implements AiChatService {
         });
         emitter.onError(throwable -> cleanup.run());
 
-        heartbeatHandle.set(heartbeatScheduler.scheduleAtFixedRate(
-                publisher::sendHeartbeat, Duration.ofSeconds(HEARTBEAT_INTERVAL_SECONDS)));
+        heartbeatHandle.set(heartbeatScheduler.scheduleAtFixedRate(() -> {
+            if (!publisher.sendHeartbeat()) {
+                cleanup.run();
+            }
+        }, Duration.ofSeconds(HEARTBEAT_INTERVAL_SECONDS)));
 
         Set<String> effectiveRoles = callerRoles == null ? Set.of() : callerRoles;
         chatExecutor.execute(() ->
@@ -252,6 +255,8 @@ public class AiChatServiceImpl implements AiChatService {
 
                 StringBuilder roundText = new StringBuilder();
                 List<ToolCallRequest> roundToolCalls = new ArrayList<>();
+                long roundTokensIn = 0;
+                long roundTokensOut = 0;
 
                 long roundStart = System.currentTimeMillis();
                 try (ChatStream stream = chatModelProvider.generateStream(request)) {
@@ -264,8 +269,12 @@ public class AiChatServiceImpl implements AiChatService {
                             break;
                         }
                         if (chunk.usage() != null) {
-                            totalTokensIn += chunk.usage().promptTokens();
-                            totalTokensOut += chunk.usage().candidatesTokens();
+                            // Gemini's streaming usage metadata is a cumulative snapshot for the
+                            // current model call. It can be repeated on several chunks, so adding
+                            // every chunk inflates a short reply into tens of thousands of tokens.
+                            // Keep the latest/highest snapshot and charge it once per model call.
+                            roundTokensIn = Math.max(roundTokensIn, chunk.usage().promptTokens());
+                            roundTokensOut = Math.max(roundTokensOut, chunk.usage().candidatesTokens());
                         }
                         if (chunk.textDelta() != null && !chunk.textDelta().isEmpty()) {
                             roundText.append(chunk.textDelta());
@@ -290,6 +299,9 @@ public class AiChatServiceImpl implements AiChatService {
                     emitter.complete();
                     return;
                 }
+
+                totalTokensIn += roundTokensIn;
+                totalTokensOut += roundTokensOut;
 
                 if (disconnected.get()) {
                     return;

@@ -60,16 +60,21 @@ public class SseEventPublisher {
         try {
             emitter.send(SseEmitter.event().name("error")
                     .data(new ErrorEventPayload(code.wireCode(), message), MediaType.APPLICATION_JSON));
-        } catch (IOException ignored) {
+        } catch (IOException | IllegalStateException ignored) {
             // Client already disconnected; nothing left to notify.
         }
     }
 
-    public void sendHeartbeat() {
+    /**
+     * @return {@code false} when the stream is already closed so the caller can cancel its
+     * scheduled heartbeat instead of leaking a repeating task.
+     */
+    public boolean sendHeartbeat() {
         try {
             emitter.send(SseEmitter.event().comment("keep-alive"));
-        } catch (IOException ignored) {
-            // Client already disconnected; the emitter's onCompletion/onTimeout will run cleanup.
+            return true;
+        } catch (IOException | IllegalStateException ignored) {
+            return false;
         }
     }
 }

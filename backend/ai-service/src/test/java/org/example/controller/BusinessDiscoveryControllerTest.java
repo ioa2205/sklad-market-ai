@@ -29,7 +29,6 @@ import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -59,7 +58,6 @@ class BusinessDiscoveryControllerTest {
     @BeforeEach
     void guardsAllow() {
         when(rateLimiter.tryConsume(anyString())).thenReturn(true);
-        when(rateLimiter.tryConsume(anyString(), anyInt())).thenReturn(true);
         when(budgetGuard.hasRemainingBudget(anyString())).thenReturn(true);
     }
 
@@ -82,13 +80,13 @@ class BusinessDiscoveryControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.query").value("cement"))
                 .andExpect(jsonPath("$.data.indexFreshness.stale").value(false));
-        verify(usageLedgerService).recordEmbeddingRequest(anyString(), org.mockito.ArgumentMatchers.eq("cement"));
+        verify(usageLedgerService, never()).recordEmbeddingRequest(anyString(), org.mockito.ArgumentMatchers.eq("cement"));
     }
 
     @Test
-    void exhaustedSemanticBudgetFallsBackToFreeDiscoveryInsteadOfReturning429() throws Exception {
+    void exhaustedChatBudgetDoesNotDisableDashboardAiSearch() throws Exception {
         when(budgetGuard.hasRemainingBudget(anyString())).thenReturn(false);
-        when(searchService.search(any(), any(), org.mockito.ArgumentMatchers.eq(false))).thenReturn(
+        when(searchService.search(any(), any(), org.mockito.ArgumentMatchers.eq(true))).thenReturn(
                 new BusinessSearchResponse("cement", 0, List.of(), BusinessSearchService.SCORE_MEANING,
                         new BusinessIndexFreshness(null, true, "product=NEVER_RUN;company=NEVER_RUN", "fallback")));
 
@@ -97,7 +95,7 @@ class BusinessDiscoveryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(searchService).search(any(), any(), org.mockito.ArgumentMatchers.eq(false));
+        verify(searchService).search(any(), any(), org.mockito.ArgumentMatchers.eq(true));
         verify(usageLedgerService, never()).recordEmbeddingRequest(anyString(), anyString());
     }
 

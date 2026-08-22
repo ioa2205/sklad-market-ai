@@ -36,8 +36,20 @@ public class SuperAdminInitializer {
 
         Users users = superAdmin.get();
 
-        if (users.getKeycloakId() != null) {
-            log.info("Super admin allaqachon Keycloak da bor");
+        if (users.getKeycloakId() != null && !users.getKeycloakId().isBlank()) {
+            try {
+                keycloakService.addProfileIdAttribute(
+                        users.getKeycloakId(),
+                        users.getId(),
+                        users.getFirstName(),
+                        users.getLastName(),
+                        users.getUsername(),
+                        null
+                );
+                log.info("Super admin Keycloak profileId atributi tekshirildi");
+            } catch (Exception e) {
+                log.error("Super admin Keycloak profileId atributini yangilashda xato", e);
+            }
             return;
         }
 

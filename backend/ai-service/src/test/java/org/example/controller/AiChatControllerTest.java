@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import org.example.ai.sse.SseEventPublisher;
+import org.example.ai.guardrail.AiChatRateLimitService;
 import org.example.config.SecurityConfig;
 import org.example.service.AiChatService;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,9 @@ class AiChatControllerTest {
 
     @MockBean
     private AiChatService aiChatService;
+
+    @MockBean
+    private AiChatRateLimitService rateLimitService;
 
     @Test
     void sendMessageWithoutJwtIsUnauthorized() throws Exception {

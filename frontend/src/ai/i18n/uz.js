@@ -260,5 +260,23 @@ export default {
   },
   admin: {
     triageNote: "Yordamchi faqat xulosa ko'rsatadi — qarorlar moderator panelida qabul qilinadi.",
+    rateLimits: {
+      title: "AI chat so'rov limitlari",
+      open: "Boshqarish",
+      close: "Yopish",
+      help: "RPM bir daqiqadagi chat so'rovlarini, kunlik token budjeti esa Gemini sarfini boshqaradi. Bosh sahifadagi AI qidiruv va o'xshash mahsulotlar cheklanmaydi hamda bu limitlarni sarflamaydi. 0 qiymati foydalanuvchi chatini bloklaydi.",
+      loading: "AI foydalanuvchilari yuklanmoqda…",
+      empty: "Hali AI chat foydalanuvchilari ro'yxatdan o'tmagan.",
+      inputLabel: "{user} uchun bir daqiqadagi so'rovlar",
+      budgetInputLabel: "{user} uchun kunlik token budjeti",
+      rpmLabel: "So'rov / daqiqa",
+      budgetLabel: "Kunlik token budjeti",
+      usage: "Bugun: {used}, qoldi: {remaining}",
+      save: "Saqlash",
+      reset: "Standart",
+      invalidRpm: "RPM uchun 0 dan 10 000 gacha butun son kiriting.",
+      invalidBudget: "Kunlik token budjeti uchun 0 dan 100 000 000 gacha butun son kiriting.",
+      error: "AI limitlarini yuklab yoki saqlab bo'lmadi. Chat ishlashda davom etadi.",
+    },
   },
 };
