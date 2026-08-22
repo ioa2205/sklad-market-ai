@@ -10,6 +10,7 @@ import org.example.ai.intent.repository.BuyingIntentRepository;
 import org.example.exception.AiNotFoundException;
 import org.example.dto.PageMeta;
 import org.example.dto.PagedResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,6 +50,7 @@ public class BuyingIntentService {
     private final Clock clock;
     private final int maxActivePerOwner;
 
+    @Autowired
     public BuyingIntentService(
             BuyingIntentRepository repository,
             BuyingIntentPrivacyGuard privacyGuard,

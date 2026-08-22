@@ -85,7 +85,7 @@ export default function HomePage() {
   const isSearching = Boolean(query.trim());
   const aiSearchActive = isAiAgentEnabled() && isLoggedIn && query.trim().length >= 2;
   const productGridClass = aiSearchActive
-    ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-6 sm:gap-5"
+    ? "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 gap-x-2 gap-y-6 sm:gap-5"
     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-2 gap-y-6 sm:gap-5";
 
   useEffect(() => {
@@ -241,8 +241,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className={`grid items-start gap-5 px-1 sm:px-8 md:px-16 ${aiSearchActive ? "lg:grid-cols-[minmax(0,1fr)_340px]" : ""}`}>
-          <div className="min-w-0">
+        <div className={`relative isolate grid items-start gap-6 px-1 sm:px-8 md:px-16 ${aiSearchActive ? "xl:grid-cols-[minmax(0,1fr)_minmax(280px,320px)]" : ""}`}>
+          <div className="relative z-10 min-w-0">
             {loading ? (
               <div className={productGridClass}>
                 {Array.from({ length: 8 }).map((_, i) => (

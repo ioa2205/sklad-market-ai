@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.example.ai.audit.ToolAuditService;
 import org.example.ai.observability.AiMetrics;
-import org.example.ai.guardrail.RpmRateLimiter;
+import org.example.ai.guardrail.AiChatRateLimitService;
 import org.example.ai.guardrail.TokenBudgetGuard;
 import org.example.ai.guardrail.UsageLedgerService;
 import org.example.ai.prompt.SystemPromptProvider;
@@ -86,7 +86,7 @@ class AiChatServiceImplToolLoopTest {
             return message;
         });
 
-        RpmRateLimiter rateLimiter = mock(RpmRateLimiter.class);
+        AiChatRateLimitService rateLimiter = mock(AiChatRateLimitService.class);
         when(rateLimiter.tryConsume(USER_SUB)).thenReturn(true);
         TokenBudgetGuard budgetGuard = mock(TokenBudgetGuard.class);
         when(budgetGuard.hasRemainingBudget(USER_SUB)).thenReturn(true);
@@ -180,7 +180,7 @@ class AiChatServiceImplToolLoopTest {
             return message;
         });
 
-        RpmRateLimiter rateLimiter = mock(RpmRateLimiter.class);
+        AiChatRateLimitService rateLimiter = mock(AiChatRateLimitService.class);
         when(rateLimiter.tryConsume(USER_SUB)).thenReturn(true);
         TokenBudgetGuard budgetGuard = mock(TokenBudgetGuard.class);
         when(budgetGuard.hasRemainingBudget(USER_SUB)).thenReturn(true);
@@ -323,11 +323,15 @@ class AiChatServiceImplToolLoopTest {
         public ChatStream generateStream(ChatGenerationRequest request) {
             requests.add(request);
             boolean toolsOffered = !request.tools().isEmpty();
-            ChatStreamChunk chunk = toolsOffered
+            ChatStreamChunk contentChunk = toolsOffered
                     ? new ChatStreamChunk("Looking. ", new TokenUsage(10, 5, 15),
                             List.of(new ToolCallRequest("call-" + callIndex.incrementAndGet(), "fake_tool", Map.of("q", "x"))))
                     : new ChatStreamChunk("Final answer.", new TokenUsage(10, 5, 15), List.of());
-            Iterator<ChatStreamChunk> iterator = List.of(chunk).iterator();
+            // Gemini can repeat the same cumulative usage snapshot on more than one stream
+            // chunk. The chat service must charge the model call once, not once per chunk.
+            ChatStreamChunk repeatedUsageChunk =
+                    new ChatStreamChunk("", new TokenUsage(10, 5, 15), List.of());
+            Iterator<ChatStreamChunk> iterator = List.of(contentChunk, repeatedUsageChunk).iterator();
             return new ChatStream() {
                 @Override
                 public void close() {

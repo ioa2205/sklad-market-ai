@@ -34,8 +34,8 @@ eureka:
 ai:
   gemini:
     api-key: ${GEMINI_API_KEY:}
-    chat-model: ${AI_CHAT_MODEL:gemini-2.5-flash}
-    chat-model-advanced: ${AI_CHAT_MODEL_ADVANCED:gemini-2.5-pro}
+    chat-model: ${AI_CHAT_MODEL:gemini-3.6-flash}
+    chat-model-advanced: ${AI_CHAT_MODEL_ADVANCED:gemini-3.1-pro-preview}
   embedding:
     model: ${AI_EMBEDDING_MODEL:gemini-embedding-001}
     dim: ${AI_EMBEDDING_DIM:768}
@@ -84,7 +84,6 @@ ai:
     rate-limit-rpm: ${AI_RATE_LIMIT_RPM:10}
     # Dashboard search is debounced but naturally more frequent than explicit chat turns. It uses
     # an isolated bucket, so raising this does not weaken chat/supplier write protection.
-    discovery-rate-limit-rpm: ${AI_DISCOVERY_RATE_LIMIT_RPM:30}
     daily-token-budget: ${AI_DAILY_TOKEN_BUDGET:200000}
     max-input-chars: 4000
     history-window-messages: 20

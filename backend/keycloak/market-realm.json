@@ -1,0 +1,63 @@
+{
+  "realm": "market-realm",
+  "displayName": "Sklad Market",
+  "enabled": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "SUPER_ADMIN",
+        "description": "Sklad Market super administrator"
+      },
+      {
+        "name": "BUYER",
+        "description": "Marketplace buyer"
+      },
+      {
+        "name": "SELLER",
+        "description": "Marketplace seller"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "market-backend",
+      "name": "Sklad Market backend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "local-dev-client-secret",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:*/*"
+      ],
+      "webOrigins": [
+        "http://localhost:*"
+      ],
+      "protocolMappers": [
+        {
+          "name": "profileId",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "profileId",
+            "claim.name": "profileId",
+            "jsonType.label": "long",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -14,6 +14,7 @@ import ChatInput from "../ai/components/ChatInput";
 import ErrorCard from "../ai/components/ErrorCard";
 import SellerListingHelper from "../ai/components/SellerListingHelper";
 import AiAgentLogo from "../ai/components/AiAgentLogo";
+import AiRateLimitAdminPanel from "../ai/components/AiRateLimitAdminPanel";
 
 const AI_REPLY_DELAY_MS = 700;
 
@@ -312,6 +313,8 @@ function RealAiAgentPage() {
         {isSeller && showListingHelper && (
           <SellerListingHelper key={accountKey} onClose={() => setShowListingHelper(false)} />
         )}
+
+        <AiRateLimitAdminPanel role={user?.role} />
 
         <div className="flex-1 overflow-y-auto flex flex-col">
           {chat.messages.length === 0 ? (

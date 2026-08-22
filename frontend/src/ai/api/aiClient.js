@@ -52,6 +52,30 @@ export async function deleteConversation(conversationId, { signal } = {}) {
   return unwrapAi(aiHttp.delete(`/ai/conversations/${conversationId}`, { signal }));
 }
 
+export async function listAiRateLimits({ signal } = {}) {
+  return unwrapAi(aiHttp.get("/ai/admin/rate-limits", { signal }));
+}
+
+export async function updateAiRateLimit(
+  userSub,
+  { requestsPerMinute, dailyTokenBudget },
+  { signal } = {}
+) {
+  return unwrapAi(
+    aiHttp.put(
+      `/ai/admin/rate-limits/${encodeURIComponent(userSub)}`,
+      { requestsPerMinute, dailyTokenBudget },
+      { signal }
+    )
+  );
+}
+
+export async function resetAiRateLimit(userSub, { signal } = {}) {
+  return unwrapAi(
+    aiHttp.delete(`/ai/admin/rate-limits/${encodeURIComponent(userSub)}`, { signal })
+  );
+}
+
 export async function confirmDraft(draftId, overrides) {
   return unwrapAi(aiHttp.post(`/ai/drafts/${draftId}/confirm`, overrides ?? {}));
 }

@@ -2,7 +2,6 @@ package org.example.ai.guardrail;
 
 import org.example.entity.UsageLedger;
 import org.example.repository.UsageLedgerRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -12,13 +11,13 @@ import java.time.LocalDate;
 public class TokenBudgetGuard {
 
     private final UsageLedgerRepository usageLedgerRepository;
-    private final long dailyBudget;
+    private final AiChatRateLimitService chatLimitService;
 
     public TokenBudgetGuard(
             UsageLedgerRepository usageLedgerRepository,
-            @Value("${ai.limits.daily-token-budget:200000}") long dailyBudget) {
+            AiChatRateLimitService chatLimitService) {
         this.usageLedgerRepository = usageLedgerRepository;
-        this.dailyBudget = dailyBudget;
+        this.chatLimitService = chatLimitService;
     }
 
     public boolean hasRemainingBudget(String userSub) {
@@ -27,6 +26,7 @@ public class TokenBudgetGuard {
 
     public long remaining(String userSub) {
         long used = usedToday(userSub);
+        long dailyBudget = chatLimitService.dailyTokenBudgetFor(userSub);
         return Math.max(0L, dailyBudget - used);
     }
 

@@ -2,6 +2,7 @@ package org.example.ai.intent.service;
 
 import org.example.ai.intent.entity.BuyingIntentStatus;
 import org.example.ai.intent.repository.BuyingIntentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,6 +33,7 @@ public class BuyingIntentMaintenanceService {
     private final int maxBatches;
     private final Duration retention;
 
+    @Autowired
     public BuyingIntentMaintenanceService(
             BuyingIntentRepository repository,
             @Value("${ai.buying-intents.maintenance-batch-size:250}") int batchSize,

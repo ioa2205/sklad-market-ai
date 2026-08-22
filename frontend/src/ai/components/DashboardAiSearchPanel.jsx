@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight2, SearchNormal1 } from "iconsax-reactjs";
+import { SearchNormal1 } from "iconsax-reactjs";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { searchBusinesses } from "../api/aiClient";
@@ -174,7 +174,6 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
   );
 
   const locale = i18n.resolvedLanguage || i18n.language || "ru";
-  const prompt = t("home.aiAssistant.queryPrompt", { query: cleanQuery });
   const errorKey = visibleState.errorCode === "budget_exceeded"
     ? "home.aiAssistant.panel.budgetExceeded"
     : visibleState.errorStatus === 429
@@ -184,7 +183,7 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
   return (
     <aside
       aria-label={t("home.aiAssistant.panel.title")}
-      className="order-first self-start overflow-hidden rounded-2xl border border-brand-200/80 bg-white shadow-card dark:border-brand-500/20 dark:bg-[#0D0D0D] lg:order-last lg:sticky lg:top-4"
+      className="relative z-0 order-last w-full min-w-0 max-w-full self-start overflow-hidden rounded-2xl border border-brand-200/80 bg-white shadow-card dark:border-brand-500/20 dark:bg-[#0D0D0D] xl:sticky xl:top-4"
     >
       <div className="border-b border-brand-100 bg-gradient-to-br from-brand-50 to-white p-4 dark:border-brand-500/15 dark:from-[#10172A] dark:to-[#0D0D0D]">
         <div className="flex items-start gap-3">
@@ -265,13 +264,6 @@ export default function DashboardAiSearchPanel({ query, isLoggedIn }) {
           </p>
         )}
 
-        <Link
-          to={`/ai-agent?new=1&prompt=${encodeURIComponent(prompt)}`}
-          className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-ink-900 px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 dark:bg-white dark:text-ink-900 dark:hover:bg-brand-100"
-        >
-          {t("home.aiAssistant.panel.continueChat")}
-          <ArrowRight2 size={14} />
-        </Link>
       </div>
     </aside>
   );

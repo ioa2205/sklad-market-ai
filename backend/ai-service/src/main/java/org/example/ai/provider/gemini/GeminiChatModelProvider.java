@@ -10,6 +10,7 @@ import com.google.genai.errors.ServerException;
 import com.google.genai.types.AutomaticFunctionCallingConfig;
 import com.google.genai.types.Content;
 import com.google.genai.types.FunctionCall;
+import com.google.genai.types.FunctionResponse;
 import com.google.genai.types.FunctionDeclaration;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
@@ -254,13 +255,30 @@ public class GeminiChatModelProvider implements ChatModelProvider {
                 parts.add(Part.fromText(modelCall.text()));
             }
             for (ToolCallRequest call : modelCall.calls()) {
-                parts.add(Part.fromFunctionCall(call.name(), call.args()));
+                FunctionCall functionCall = FunctionCall.builder()
+                        .id(call.callId())
+                        .name(call.name())
+                        .args(call.args())
+                        .build();
+                Part.Builder part = Part.builder().functionCall(functionCall);
+                if (call.continuationSignature() != null) {
+                    // Gemini 3 function calls carry an opaque thought signature. It must be
+                    // replayed byte-for-byte on the same Part when sending the tool result.
+                    part.thoughtSignature(call.continuationSignature());
+                }
+                parts.add(part.build());
             }
             return Content.builder().role("model").parts(parts).build();
         }
         ToolResultEntry toolResult = (ToolResultEntry) entry;
         List<Part> parts = toolResult.outcomes().stream()
-                .map(outcome -> Part.fromFunctionResponse(outcome.name(), outcome.responsePayload()))
+                .map(outcome -> Part.builder()
+                        .functionResponse(FunctionResponse.builder()
+                                .id(outcome.callId())
+                                .name(outcome.name())
+                                .response(outcome.responsePayload())
+                                .build())
+                        .build())
                 .toList();
         return Content.builder().role("user").parts(parts).build();
     }
@@ -301,11 +319,12 @@ public class GeminiChatModelProvider implements ChatModelProvider {
         }
     }
 
-    private static ToolCallRequest toToolCallRequest(FunctionCall functionCall) {
+    private static ToolCallRequest toToolCallRequest(Part part) {
+        FunctionCall functionCall = part.functionCall().orElseThrow();
         String callId = functionCall.id().orElseGet(() -> java.util.UUID.randomUUID().toString());
         String name = functionCall.name().orElse("");
         Map<String, Object> args = functionCall.args().orElse(Map.of());
-        return new ToolCallRequest(callId, name, args);
+        return new ToolCallRequest(callId, name, args, part.thoughtSignature().orElse(null));
     }
 
     private static TokenUsage toTokenUsage(GenerateContentResponseUsageMetadata usage) {
@@ -361,11 +380,14 @@ public class GeminiChatModelProvider implements ChatModelProvider {
                     }
                     String text = chunk.text();
                     TokenUsage usage = chunk.usageMetadata().map(GeminiChatModelProvider::toTokenUsage).orElse(null);
-                    // functionCalls() (like parts()) returns null, not an empty list, when the
-                    // chunk carries no candidate content at all (e.g. a pure usage/heartbeat chunk).
-                    List<FunctionCall> rawCalls = chunk.functionCalls();
-                    List<ToolCallRequest> toolCalls = rawCalls == null ? List.of()
-                            : rawCalls.stream().map(GeminiChatModelProvider::toToolCallRequest).toList();
+                    // Read function calls from their Parts instead of response.functionCalls().
+                    // The convenience method discards Gemini 3's required thoughtSignature.
+                    List<Part> rawParts = chunk.parts();
+                    List<ToolCallRequest> toolCalls = rawParts == null ? List.of()
+                            : rawParts.stream()
+                                    .filter(part -> part.functionCall().isPresent())
+                                    .map(GeminiChatModelProvider::toToolCallRequest)
+                                    .toList();
                     return new ChatStreamChunk(text, usage, toolCalls);
                 }
             };

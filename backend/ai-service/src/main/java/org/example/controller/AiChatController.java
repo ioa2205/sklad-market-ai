@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.ai.guardrail.AiChatRateLimitService;
 import org.example.dto.SendMessageRequest;
 import org.example.security.AiSecurityUtil;
 import org.example.service.AiChatService;
@@ -27,9 +28,11 @@ import java.util.UUID;
 public class AiChatController {
 
     private final AiChatService aiChatService;
+    private final AiChatRateLimitService rateLimitService;
 
-    public AiChatController(AiChatService aiChatService) {
+    public AiChatController(AiChatService aiChatService, AiChatRateLimitService rateLimitService) {
         this.aiChatService = aiChatService;
+        this.rateLimitService = rateLimitService;
     }
 
     @PostMapping(value = "/{id}/messages", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -41,6 +44,7 @@ public class AiChatController {
         response.setHeader("X-Accel-Buffering", "no");
         response.setHeader("Cache-Control", "no-cache");
         String userSub = AiSecurityUtil.requireSub();
+        rateLimitService.registerUser(userSub, AiSecurityUtil.currentUsername());
         String bearerToken = AiSecurityUtil.requireBearerToken();
         Set<String> callerRoles = AiSecurityUtil.currentRoleSet();
         return aiChatService.streamMessage(userSub, id, request.getContent(), acceptLanguage, bearerToken, callerRoles);

@@ -42,6 +42,14 @@ public final class AiSecurityUtil {
         return currentJwt().getTokenValue();
     }
 
+    /** Stable human-readable label for AI-only administration; authorization still uses sub. */
+    public static String currentUsername() {
+        Jwt jwt = currentJwt();
+        String username = jwt.getClaimAsString("preferred_username");
+        if (username == null || username.isBlank()) username = jwt.getClaimAsString("email");
+        return username == null || username.isBlank() ? null : username.trim();
+    }
+
     /** Comma-joined, sorted role names (without the ROLE_ prefix), for informational storage only. */
     public static String currentRoles() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
